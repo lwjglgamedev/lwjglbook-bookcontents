@@ -14,9 +14,9 @@ You can also check my Vulkan book [here](https://github.com/lwjglgamedev/vulkanb
 
 ## Source Code
 
-The source code of the samples of this book is in [GitHub](https://github.com/lwjglgamedev/lwjglbook).
+The source code of the samples of this book is in [GitHub](https://github.com/lwjglgamedev/lwjglbook-ng).
 
-The source code for the book itself is also published in [GitHub](https://github.com/lwjglgamedev/lwjglbook-bookcontents).
+The source code for the book itself is also published in [GitHub](https://github.com/lwjglgamedev/lwjglbook-bookcontents-ng).
 
 ## License
 
