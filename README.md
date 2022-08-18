@@ -12,6 +12,13 @@ I started to collect some materials, develop some examples and decided to organi
 
 You can also check my Vulkan book [here](https://github.com/lwjglgamedev/vulkanbook).
 
+## Previous version
+
+Previous version of the book can still be accessed in Github. Here are the links:
+
+* [Book contents](https://github.com/lwjglgamedev/lwjglbook-bookcontents-leg)
+* [Source code](https://github.com/lwjglgamedev/lwjglbook-leg)
+
 ## Source Code
 
 The source code of the samples of this book is in [GitHub](https://github.com/lwjglgamedev/lwjglbook).
