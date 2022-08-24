@@ -2,7 +2,7 @@
 
 Until this moment we have been dealing with graphics, but another key aspect of every game is audio. In this chapter we will add sound support.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-16).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-16).
 
 ## OpenAL
 

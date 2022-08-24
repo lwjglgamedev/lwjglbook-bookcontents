@@ -2,7 +2,7 @@
 
 One of the key aspects of every game is the ability to interact with the environment. This capability requires to be able to select objects in the 3D scene. In this chapter we will explore how this can be achieved.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-18).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-18).
 
 ## Concepts
 

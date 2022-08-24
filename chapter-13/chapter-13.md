@@ -2,7 +2,7 @@
 
 In this chapter we will see review how to create a fog effect in our game engine. With that effect, we will simulate how distant objects get dimmed and seem to vanish into a dense fog.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-13).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-13).
 
 ## Concepts
 

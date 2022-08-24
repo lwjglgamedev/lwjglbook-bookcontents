@@ -2,7 +2,7 @@
 
 In this chapter we will render or first triangle to the screen and introduce the basis of a programmable graphics pipeline. But, prior to that, we will explain firs the basis of coordinate systems. trying to introduce some fundamental mathematical concepts in a simple way to support the techniques and topics that we will address in subsequent chapters. We will assume some simplifications which may sacrifice preciseness for the sake of legibility.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-03).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-03).
 
 ## A brief about coordinates
 

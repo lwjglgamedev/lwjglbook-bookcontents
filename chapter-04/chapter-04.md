@@ -2,7 +2,7 @@
 
 In this chapter we will continue talking about how OpenGL renders things. We will draw a quad instead of a triangle and set additional data to the Mesh, such as a color for each vertex.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-04).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-04).
 
 # Mesh modification
 

@@ -2,7 +2,7 @@
 
 In this chapter we will learn how to load textures, how they relate to a model and how to use them in the rendering process
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-07).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-07).
 
 ## Texture loading
 

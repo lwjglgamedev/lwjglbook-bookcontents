@@ -6,7 +6,7 @@ In order to render more realistic scenes, we are going to use normal maps. If yo
 
 We may think of increasing the detail of our models by increasing the number of triangles and reflect those imperfections, but performance will degrade. What we need is a way to change the way light reflects on surfaces to increase the realism. This is achieved with the normal mapping technique.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-14).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-14).
 
 ## Concepts
 

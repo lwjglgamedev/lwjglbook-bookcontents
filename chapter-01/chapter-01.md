@@ -237,6 +237,6 @@ If you have your environment correctly set up you should be able to execute it a
 
 ![Hello World](hello_world.png)
 
-The source code of this chapter is located [here](https://github.com/lwjglgamedev/lwjglbook/chapter-01).
+The source code of this chapter is located [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-01).
 
 [Next chapter](../chapter-02/chapter-02.md)

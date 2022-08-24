@@ -2,7 +2,7 @@
 
 In this chapter we will learn how to move inside a rendered 3D scene. This capability is like having a camera that can travel inside the 3D world and in fact that's the term used to refer to it.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-08).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-08).
 
 ## Camera introduction
 

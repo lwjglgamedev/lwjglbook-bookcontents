@@ -2,7 +2,7 @@
 
 Until now we have only loaded static 3D models, but in this chapter we will learn how to animate them. When thinking about animations the first approach is to create different meshes for each model positions, load them up into the GPU and draw them sequentially to create the illusion of movement. Although this approach is perfect for some games, it's not very efficient in terms of memory consumption. This where skeletal animation comes to play. We will learn how to load these models using [assimp](https://github.com/assimp/assimp).
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-15).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-15).
 
 ## Anti-aliasing support
 

@@ -2,7 +2,7 @@
 
 [Dear ImGui}(https://github.com/ocornut/imgui) is a user interface library which can use several backends such as OpenGL and Vulkan. We will use it to display gui controls or to develop HUDs. It provides multiple widgets and the look and fell is easily customizable.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-10).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-10).
 
 ## Imgui integration
 

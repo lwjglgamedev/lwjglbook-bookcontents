@@ -2,7 +2,7 @@
 
 In this chapter we will set up the basis for 3D models and explain the concept of model transformations to render our first 3D shaper, a rotating cube.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-06).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-06).
 
 ## Models and Entities
 

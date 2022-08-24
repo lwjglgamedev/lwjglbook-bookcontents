@@ -2,7 +2,7 @@
 
 In this chapter, we will learn two important concepts, perspective projection (to render far away objects smaller than closer ones) and uniforms (a buffer like structure to pass additional data to the shader).
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-05).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-05).
 
 ## Perspective projection
 

@@ -2,7 +2,7 @@
 
 Currently we are able to represent how light affects the objects in a 3D scene. Objects that get more light are shown brighter than objects that do not receive light. However we are still not able to cast shadows. Shadows will increase the degree of realism of a 3D scene. This is what we will do in this chapter.
 
-You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/chapter-17).
+You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-17).
 
 ## Shadow Mapping
 
