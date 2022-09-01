@@ -296,6 +296,44 @@ The first thing we do in that function is to calculate the TBN matrix. After tha
 
 Finally, we use that function only if the material defines a normal map texture.
 
+We need to modify also the `SceneRender` class to create and use the new normals that we use in the shaders:
+
+```java
+public class SceneRender {
+    ...
+    private void createUniforms() {
+        ...
+        uniformsMap.createUniform("normalSampler");
+        ...
+        uniformsMap.createUniform("material.hasNormalMap");
+        ...
+    }
+    public void render(Scene scene) {
+        ...
+        uniformsMap.setUniform("normalSampler", 1);
+        ...
+        for (Model model : models) {
+            ...
+            for (Material material : model.getMaterialList()) {
+                ...
+                String normalMapPath = material.getNormalMapPath();
+                boolean hasNormalMapPath = normalMapPath != null;
+                uniformsMap.setUniform("material.hasNormalMap", hasNormalMapPath ? 1 : 0);
+                ...
+                if (hasNormalMapPath) {
+                    Texture normalMapTexture = textureCache.getTexture(normalMapPath);
+                    glActiveTexture(GL_TEXTURE1);
+                    normalMapTexture.bind();
+                }
+                ...
+            }
+        }
+        ...
+    }
+    ...    
+}
+```
+
 The last step is to update the `Main` class to show this effect. We will load two quads with and without normal maps associated to them. Also we will use left and right arrows to control light angle to show the effect.
 
 ```java
