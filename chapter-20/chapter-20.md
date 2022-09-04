@@ -667,7 +667,7 @@ void main() {
 The main changes are related to the way we access material information and textures. We will now have an array of materials information, which will be accessed by the index we calculated in the vertex shader which is now in the `outMaterialIdx` input variable (which has the `flat` modifier which states that this value should not be interpolated from vertex to fragment stage). We will be using an array of textures to access either regular textures or normal maps. The index to those textures are stored now in the `Material` struct.
 
 
-Now it is the turn to examine the changes in the `SceneRender` class. We will start by defining a set of constants that will be used in the code and by modifying the `createUniforms` according to the changes in the shaders shown before:
+Now it is the turn to examine the changes in the `SceneRender` class. We will start by defining a set of constants that will be used in the code, one handle for the buffer that will have the indirect drawing instructions (`staticRenderBufferHandle`) and the number of drawing commands (`staticDrawCount`). We will need also to modify the `createUniforms` method according to the changes in the shaders shown before:
 
 ```java
 public class RenderBuffers {
@@ -677,6 +677,9 @@ public class RenderBuffers {
     private static final int COMMAND_SIZE = 5 * 4;
     private static final int MAX_MATERIALS = 20;
     private static final int MAX_TEXTURES = 16;
+    ...
+    private int staticDrawCount;
+    private int staticRenderBufferHandle;
     ...
     private void createUniforms() {
         uniformsMap = new UniformsMap(shaderProgram.getProgramId());
@@ -715,7 +718,7 @@ The main changes are in the `render` method, which is defined like this:
 ```java
 public class RenderBuffers {
     ...
-    public void render(Scene scene, RenderBuffers globalBuffer, GBuffer gBuffer) {
+    public void render(Scene scene, RenderBuffers renderBuffers, GBuffer gBuffer) {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gBuffer.getGBufferId());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, gBuffer.getWidth(), gBuffer.getHeight());
@@ -739,18 +742,20 @@ public class RenderBuffers {
             texture.bind();
         }
 
-        Map<String, Integer> entitiesIdxMap = new HashMap<>();
         int entityIdx = 0;
         for (Model model : scene.getModelMap().values()) {
             List<Entity> entities = model.getEntitiesList();
             for (Entity entity : entities) {
-                entitiesIdxMap.put(entity.getId(), entityIdx);
                 uniformsMap.setUniform("modelMatrices[" + entityIdx + "]", entity.getModelMatrix());
                 entityIdx++;
             }
         }
 
-        renderStaticMeshes(scene, globalBuffer, entitiesIdxMap);
+        // Static meshes
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, staticRenderBufferHandle);
+        glBindVertexArray(renderBuffers.getStaticVaoId());
+        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, staticDrawCount, 0);
+        glBindVertexArray(0);
 
         glEnable(GL_BLEND);
         shaderProgram.unbind();
@@ -759,34 +764,153 @@ public class RenderBuffers {
 }
 ```
 
-You can see that we now have to bind the array of texture samplers and activate all the texture units. In addition to that, we iterate over the entities and set up the uniform values for the model matrices. After that, we call the `renderStaticMeshes` method which will be the one that populates the indirect drawing buffer. In the next chapter we will see that we need to separate how we do this for static vs animated meshes. The `renderStaticMeshes` method is defined like this:
+You can see that we now have to bind the array of texture samplers and activate all the texture units. In addition to that, we iterate over the entities and set up the uniform values for the model matrices. After that, we call the `glMultiDrawElementsIndirect` function to perform the indirect drawing. Prior to that, we need to bind the buffers that hold drawing instructions (drawing commands) and the VAO that holds the meshes and indices data. But, when do we populate the buffer for indirect drawing=? The answer is that this not need to be performed each render call, if there are no changes in the number of entities, you can record that buffer once, and use it in each render call. In this specific example, we will just populate that buffer at start-up. This means, that, if you want to make changes in the number of entities, you would nee to re-create that buffer again (you should do that for your own engine).
 
+The method that actually builds the indirect draw buffer is called `setupStaticCommandBuffer` and starts like this:
 ```java
 public class RenderBuffers {
     ...
-    private void renderStaticMeshes(Scene scene, RenderBuffers globalBuffer, Map<String, Integer> entitiesIdxMap) {
+    private void setupStaticCommandBuffer(Scene scene) {
         List<Model> modelList = scene.getModelMap().values().stream().filter(m -> !m.isAnimated()).toList();
-
-        ByteBuffer commandBuffer = buildStaticCommandBuffer(modelList, entitiesIdxMap);
-        int drawCount = commandBuffer.remaining() / COMMAND_SIZE;
-        int bufferHandle = glGenBuffers();
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, bufferHandle);
-        glBufferData(GL_DRAW_INDIRECT_BUFFER, commandBuffer, GL_DYNAMIC_DRAW);
-
-        glBindVertexArray(globalBuffer.getStaticVaoId());
-        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, drawCount, 0);
-        glBindVertexArray(0);
-
-        MemoryUtil.memFree(commandBuffer);
-        glDeleteBuffers(bufferHandle);
+        Map<String, Integer> entitiesIdxMap = new HashMap<>();
+        int entityIdx = 0;
+        int numMeshes = 0;
+        for (Model model : scene.getModelMap().values()) {
+            List<Entity> entities = model.getEntitiesList();
+            numMeshes += model.getMeshDrawDataList().size();
+            for (Entity entity : entities) {
+                entitiesIdxMap.put(entity.getId(), entityIdx);
+                entityIdx++;
+            }
+        }
+        ...
     }
     ...
 }
 ```
 
-In this case, we will populate the buffer that will hold the draw indirect instructions (by calling the `buildStaticCommandBuffer`). Each set of draw instructions si composed by five attributes, ech of the with a length of 4 bytes (total length of each set of parameters is what defines the `COMMAND_SIZE` constant). In this case, we are creating a new buffer in each draw call. This is not the most efficient way of doing it at all, but it keeps the things simple enough. In your game engine you will need to reuse a buffer. Also, there is no need to populate the indirect drawing buffer. We will keep this approach as an example, it gives you some flexibility so you can add new entities, but should think in caching for your engine.
+We firs start by iterating over the models to get the position in the list of entity instances each instance is. We store that information in a `Map``  using entity identifier as key. We will need this info later on since, the indirect drawing commands will be recorded iterating over meshes associated to each model. In addition to that, we calculate the total number of meshes. After that, we will create the buffer that wil hold indirect drawing instructions and populate it:
 
-SceneRender
+```java
+public class RenderBuffers {
+    ...
+    private void setupStaticCommandBuffer(Scene scene) {
+        ...
+        int firstIndex = 0;
+        int baseInstance = 0;
+        int drawElement = 0;
+        shaderProgram.bind();
+        ByteBuffer commandBuffer = MemoryUtil.memAlloc(numMeshes * COMMAND_SIZE);
+        for (Model model : modelList) {
+            List<Entity> entities = model.getEntitiesList();
+            int numEntities = entities.size();
+            for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
+                // count
+                commandBuffer.putInt(meshDrawData.vertices());
+                // instanceCount
+                commandBuffer.putInt(numEntities);
+                commandBuffer.putInt(firstIndex);
+                // baseVertex
+                commandBuffer.putInt(meshDrawData.offset());
+                commandBuffer.putInt(baseInstance);
+
+                firstIndex += meshDrawData.vertices();
+                baseInstance += entities.size();
+
+                for (Entity entity : entities) {
+                    String name = "drawElements[" + drawElement + "]";
+                    uniformsMap.setUniform(name + ".modelMatrixIdx", entitiesIdxMap.get(entity.getId()));
+                    drawElement++;
+                }
+            }
+        }
+        commandBuffer.flip();
+        shaderProgram.unbind();
+
+        staticDrawCount = commandBuffer.remaining() / COMMAND_SIZE;
+
+        staticRenderBufferHandle = glGenBuffers();
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, staticRenderBufferHandle);
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, commandBuffer, GL_DYNAMIC_DRAW);
+
+        MemoryUtil.memFree(commandBuffer);
+    }
+    ...
+}
+```
+
+As you can see we firs allocate a `ByteBuffer`. This buffer will hold as many instruction sets as meshes. Each set of draw instructions si composed by five attributes, ech of the with a length of 4 bytes (total length of each set of parameters is what defines the `COMMAND_SIZE` constant). We cannot allocate this buffer using `MemoryStack` since we will run out of space quickly (the stack that LWJGL uses for this is limited in size). Therefore, we need to allocate it using `MemoryUtil` and remember to manually de-allocate that once we are done. Once we have the buffer we start iterating over the meshes associated to the model. You may have a look at the beginning of this chapter to check
+ the struct that draw indirect requires. In addition to that, we also populate the `drawElements` uniform using the `Map` we calculated previously, to properly get the model matrix index for each entity. Finally, we just create a GPU buffer and dump the data into it.
+
+We will need to update the `cleanup` method to free the indirect drawing buffer:
+
+```java
+public class RenderBuffers {
+    ...
+    public void cleanup() {
+        shaderProgram.cleanup();
+        glDeleteBuffers(staticRenderBufferHandle);
+    }
+    ...
+}
+```
+
+We will need a new method to the set up the values for the materials uniform:
+
+```java
+public class RenderBuffers {
+    ...
+    public void setupMaterialsUniform(TextureCache textureCache, MaterialCache materialCache) {
+        List<Texture> textures = textureCache.getAll().stream().toList();
+        int numTextures = textures.size();
+        if (numTextures > MAX_TEXTURES) {
+            Logger.warn("Only " + MAX_TEXTURES + " textures can be used");
+        }
+        Map<String, Integer> texturePosMap = new HashMap<>();
+        for (int i = 0; i < Math.min(MAX_TEXTURES, numTextures); i++) {
+            texturePosMap.put(textures.get(i).getTexturePath(), i);
+        }
+
+        shaderProgram.bind();
+        List<Material> materialList = materialCache.getMaterialsList();
+        int numMaterials = materialList.size();
+        for (int i = 0; i < numMaterials; i++) {
+            Material material = materialCache.getMaterial(i);
+            String name = "materials[" + i + "]";
+            uniformsMap.setUniform(name + ".diffuse", material.getDiffuseColor());
+            uniformsMap.setUniform(name + ".specular", material.getSpecularColor());
+            uniformsMap.setUniform(name + ".reflectance", material.getReflectance());
+            String normalMapPath = material.getNormalMapPath();
+            int idx = 0;
+            if (normalMapPath != null) {
+                idx = texturePosMap.computeIfAbsent(normalMapPath, k -> 0);
+            }
+            uniformsMap.setUniform(name + ".normalMapIdx", idx);
+            Texture texture = textureCache.getTexture(material.getTexturePath());
+            idx = texturePosMap.computeIfAbsent(texture.getTexturePath(), k -> 0);
+            uniformsMap.setUniform(name + ".textureIdx", idx);
+        }
+        shaderProgram.unbind();
+    }
+    ...
+}
+```
+
+We just check that we are not surpassing the maximum number of supported textures (`MAX_TEXTURES`)  and just create an array of materials information with the information we used in the previous chapters. The only change is that we will need to store the index of the associated texture and normal maps in the material information.
+
+To complete the changes in the `SceneRender` class, we will create a method that wraps the `setupXX` so it can be invoked from the `Render` class:
+
+```java
+public class RenderBuffers {
+    ...
+    public void setupData(Scene scene) {
+        setupStaticCommandBuffer(scene);
+        setupMaterialsUniform(scene.getTextureCache(), scene.getMaterialCache());
+    }
+    ...
+}
+```
+
 ShadowRender
 shadow.vert
 Render
