@@ -538,12 +538,258 @@ public class RenderBuffers {
 
 We just define the vertex attributes for the VAO as in previous examples. The only difference here is that we are using a single VBO for them.
 
+Prior to examining the changes in the `SceneRender` class, let's start with the vertex shader (`scene.vert`), which starts like this:
+
+```glsl
+#version 460
+
+const int MAX_DRAW_ELEMENTS = 100;
+const int MAX_ENTITIES = 50;
+
+layout (location=0) in vec3 position;
+layout (location=1) in vec3 normal;
+layout (location=2) in vec3 tangent;
+layout (location=3) in vec3 bitangent;
+layout (location=4) in vec2 texCoord;
+
+out vec3 outNormal;
+out vec3 outTangent;
+out vec3 outBitangent;
+out vec2 outTextCoord;
+out vec4 outViewPosition;
+out vec4 outWorldPosition;
+out uint outMaterialIdx;
+
+struct DrawElement
+{
+    int modelMatrixIdx;
+    int materialIdx;
+};
+
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 modelMatrix;
+uniform DrawElement drawElements[MAX_DRAW_ELEMENTS];
+uniform mat4 modelMatrices[MAX_ENTITIES];
+...
+```
+
+The first thing that you will notice is that we have increased the version to `460`. We also have removed the constants associated with animations (`MAX_WEIGHTS` and `MAX_BONES`), the attributes for bones indices and the uniform for bone matrices. You will see in next chapter that we will no need this information here for animations. We have created two new constants to define the size oif the `drawElements` and `modelMatrices` uniforms. The `drawElements` uniform will hold `DrawElement` instances. It will have one item per mesh and associated entity. If you remember, we will record a single instruction to draw all the items associated to a mesh, setting the number of instances to be drawn. We will need however, specific per entity data, such as the model matrix. This will be hold in the `drawElements` array, which will also point to the material index to be used. The `modelMatrices` array will just hold the model matrices for each of the entities. Material information will be used in the fragment shader you we pass it using the `outMaterialIdx` output variable.
+
+The `main` function, since we do not have to deal with animations, has been simplified a lot:
+
+```glsl
+...
+void main()
+{
+    vec4 initPos = vec4(position, 1.0);
+    vec4 initNormal = vec4(normal, 0.0);
+    vec4 initTangent = vec4(tangent, 0.0);
+    vec4 initBitangent = vec4(bitangent, 0.0);
+
+    uint idx = gl_BaseInstance + gl_InstanceID;
+    DrawElement drawElement = drawElements[idx];
+    outMaterialIdx = drawElement.materialIdx;
+    mat4 modelMatrix =  modelMatrices[drawElement.modelMatrixIdx];
+    mat4 modelViewMatrix = viewMatrix * modelMatrix;
+    outWorldPosition = modelMatrix * initPos;
+    outViewPosition  = viewMatrix * outWorldPosition;
+    gl_Position   = projectionMatrix * outViewPosition;
+    outNormal     = normalize(modelViewMatrix * initNormal).xyz;
+    outTangent    = normalize(modelViewMatrix * initTangent).xyz;
+    outBitangent  = normalize(modelViewMatrix * initBitangent).xyz;
+    outTextCoord  = texCoord;
+}
+```
+
+The key here is to get the proper index to access the `drawElements` size. We use the `gl_BaseInstance` and `gl_InstanceID` built-in in variables. When recording the instructions for indirect drawing we will use the `baseInstance` attribute. The value for that attribute will be the one associated to `gl_BaseInstance` built-in in variable. The `gl_InstanceID` will start at `0` whenever we change form a mesh to another, and will be increased for of of the instances of the entities associated to the models. Therefore, by combining this two variables we will be able to access the per-entity specific information in the `drawElements` array.  Once we have the proper index, we just transform positions and normal information as in previous versions of the shader.
+
+The scene fragment shader (`scene.frag`) is defined like this:
+
+```glsl
+#version 330
+
+const int MAX_MATERIALS  = 20;
+const int MAX_TEXTURES = 16;
+
+in vec3 outNormal;
+in vec3 outTangent;
+in vec3 outBitangent;
+in vec2 outTextCoord;
+in vec4 outViewPosition;
+in vec4 outWorldPosition;
+flat in uint outMaterialIdx;
+
+layout (location = 0) out vec4 buffAlbedo;
+layout (location = 1) out vec4 buffNormal;
+layout (location = 2) out vec4 buffSpecular;
+
+struct Material
+{
+    vec4 diffuse;
+    vec4 specular;
+    float reflectance;
+    int normalMapIdx;
+    int textureIdx;
+};
+
+uniform sampler2D txtSampler[MAX_TEXTURES];
+uniform Material materials[MAX_MATERIALS];
+
+vec3 calcNormal(int idx, vec3 normal, vec3 tangent, vec3 bitangent, vec2 textCoords) {
+    mat3 TBN = mat3(tangent, bitangent, normal);
+    vec3 newNormal = texture(txtSampler[idx], textCoords).rgb;
+    newNormal = normalize(newNormal * 2.0 - 1.0);
+    newNormal = normalize(TBN * newNormal);
+    return newNormal;
+}
+
+void main() {
+    Material material = materials[outMaterialIdx];
+    vec4 text_color = texture(txtSampler[material.textureIdx], outTextCoord);
+    vec4 diffuse = text_color + material.diffuse;
+    if (diffuse.a < 0.5) {
+        discard;
+    }
+    vec4 specular = text_color + material.specular;
+
+    vec3 normal = outNormal;
+    if (material.normalMapIdx > 0) {
+        normal = calcNormal(material.normalMapIdx, outNormal, outTangent, outBitangent, outTextCoord);
+    }
+
+    buffAlbedo   = vec4(diffuse.xyz, material.reflectance);
+    buffNormal   = vec4(0.5 * normal + 0.5, 1.0);
+    buffSpecular = specular;
+}
+```
+
+The main changes are related to the way we access material information and textures. We will now have an array of materials information, which will be accessed by the index we calculated in the vertex shader which is now in the `outMaterialIdx` input variable (which has the `flat` modifier which states that this value should not be interpolated from vertex to fragment stage). We will be using an array of textures to access either regular textures or normal maps. The index to those textures are stored now in the `Material` struct.
+
+
+Now it is the turn to examine the changes in the `SceneRender` class. We will start by defining a set of constants that will be used in the code and by modifying the `createUniforms` according to the changes in the shaders shown before:
+
+```java
+public class RenderBuffers {
+    ...
+    public static final int MAX_DRAW_ELEMENTS = 100;
+    public static final int MAX_ENTITIES = 50;
+    private static final int COMMAND_SIZE = 5 * 4;
+    private static final int MAX_MATERIALS = 20;
+    private static final int MAX_TEXTURES = 16;
+    ...
+    private void createUniforms() {
+        uniformsMap = new UniformsMap(shaderProgram.getProgramId());
+        uniformsMap.createUniform("projectionMatrix");
+        uniformsMap.createUniform("viewMatrix");
+
+        for (int i = 0; i < MAX_TEXTURES; i++) {
+            uniformsMap.createUniform("txtSampler[" + i + "]");
+        }
+
+        for (int i = 0; i < MAX_MATERIALS; i++) {
+            String name = "materials[" + i + "]";
+            uniformsMap.createUniform(name + ".diffuse");
+            uniformsMap.createUniform(name + ".specular");
+            uniformsMap.createUniform(name + ".reflectance");
+            uniformsMap.createUniform(name + ".normalMapIdx");
+            uniformsMap.createUniform(name + ".textureIdx");
+        }
+
+        for (int i = 0; i < MAX_DRAW_ELEMENTS; i++) {
+            String name = "drawElements[" + i + "]";
+            uniformsMap.createUniform(name + ".modelMatrixIdx");
+            uniformsMap.createUniform(name + ".materialIdx");
+        }
+
+        for (int i = 0; i < MAX_ENTITIES; i++) {
+            uniformsMap.createUniform("modelMatrices[" + i + "]");
+        }
+    }
+    ...
+}
+```
+
+The main changes are in the `render` method, which is defined like this:
+
+```java
+public class RenderBuffers {
+    ...
+    public void render(Scene scene, RenderBuffers globalBuffer, GBuffer gBuffer) {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gBuffer.getGBufferId());
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, gBuffer.getWidth(), gBuffer.getHeight());
+        glDisable(GL_BLEND);
+
+        shaderProgram.bind();
+
+        uniformsMap.setUniform("projectionMatrix", scene.getProjection().getProjMatrix());
+        uniformsMap.setUniform("viewMatrix", scene.getCamera().getViewMatrix());
+
+        TextureCache textureCache = scene.getTextureCache();
+        List<Texture> textures = textureCache.getAll().stream().toList();
+        int numTextures = textures.size();
+        if (numTextures > MAX_TEXTURES) {
+            Logger.warn("Only " + MAX_TEXTURES + " textures can be used");
+        }
+        for (int i = 0; i < Math.min(MAX_TEXTURES, numTextures); i++) {
+            uniformsMap.setUniform("txtSampler[" + i + "]", i);
+            Texture texture = textures.get(i);
+            glActiveTexture(GL_TEXTURE0 + i);
+            texture.bind();
+        }
+
+        Map<String, Integer> entitiesIdxMap = new HashMap<>();
+        int entityIdx = 0;
+        for (Model model : scene.getModelMap().values()) {
+            List<Entity> entities = model.getEntitiesList();
+            for (Entity entity : entities) {
+                entitiesIdxMap.put(entity.getId(), entityIdx);
+                uniformsMap.setUniform("modelMatrices[" + entityIdx + "]", entity.getModelMatrix());
+                entityIdx++;
+            }
+        }
+
+        renderStaticMeshes(scene, globalBuffer, entitiesIdxMap);
+
+        glEnable(GL_BLEND);
+        shaderProgram.unbind();
+    }
+    ...
+}
+```
+
+You can see that we now have to bind the array of texture samplers and activate all the texture units. In addition to that, we iterate over the entities and set up the uniform values for the model matrices. After that, we call the `renderStaticMeshes` method which will be the one that populates the indirect drawing buffer. In the next chapter we will see that we need to separate how we do this for static vs animated meshes. The `renderStaticMeshes` method is defined like this:
+
+```java
+public class RenderBuffers {
+    ...
+    private void renderStaticMeshes(Scene scene, RenderBuffers globalBuffer, Map<String, Integer> entitiesIdxMap) {
+        List<Model> modelList = scene.getModelMap().values().stream().filter(m -> !m.isAnimated()).toList();
+
+        ByteBuffer commandBuffer = buildStaticCommandBuffer(modelList, entitiesIdxMap);
+        int drawCount = commandBuffer.remaining() / COMMAND_SIZE;
+        int bufferHandle = glGenBuffers();
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, bufferHandle);
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, commandBuffer, GL_DYNAMIC_DRAW);
+
+        glBindVertexArray(globalBuffer.getStaticVaoId());
+        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, drawCount, 0);
+        glBindVertexArray(0);
+
+        MemoryUtil.memFree(commandBuffer);
+        glDeleteBuffers(bufferHandle);
+    }
+    ...
+}
+```
+
+In this case, we will populate the buffer that will hold the draw indirect instructions (by calling the `buildStaticCommandBuffer`). Each set of draw instructions si composed by five attributes, ech of the with a length of 4 bytes (total length of each set of parameters is what defines the `COMMAND_SIZE` constant). In this case, we are creating a new buffer in each draw call. This is not the most efficient way of doing it at all, but it keeps the things simple enough. In your game engine you will need to reuse a buffer. Also, there is no need to populate the indirect drawing buffer. We will keep this approach as an example, it gives you some flexibility so you can add new entities, but should think in caching for your engine.
 
 SceneRender
-scene.vert
-scene.frag
 ShadowRender
 shadow.vert
+Render
 SkyBoxRender
 SkyBox
 TextureCache
