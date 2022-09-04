@@ -911,13 +911,376 @@ public class RenderBuffers {
 }
 ```
 
-ShadowRender
-shadow.vert
-Render
-SkyBoxRender
-SkyBox
-TextureCache
-Engine
-Main
+We will change also the shadow render process to use indirect drawing. The changes in the vertex shader (`shadow.vert`) are quite similar, we will not be using animation information and we need to access the proper model matrices using the combination of `gl_BaseInstance` and `gl_InstanceID` built-in variables. In this case, we do not need material information so the fragment shader (`shadow.frag`) is not changed.
+
+```glsl
+#version 460
+
+const int MAX_DRAW_ELEMENTS = 100;
+const int MAX_ENTITIES = 50;
+
+layout (location=0) in vec3 position;
+layout (location=1) in vec3 normal;
+layout (location=2) in vec3 tangent;
+layout (location=3) in vec3 bitangent;
+layout (location=4) in vec2 texCoord;
+
+struct DrawElement
+{
+    int modelMatrixIdx;
+};
+
+uniform mat4 modelMatrix;
+uniform mat4 projViewMatrix;
+uniform DrawElement drawElements[MAX_DRAW_ELEMENTS];
+uniform mat4 modelMatrices[MAX_ENTITIES];
+
+void main()
+{
+    vec4 initPos = vec4(position, 1.0);
+    uint idx = gl_BaseInstance + gl_InstanceID;
+    int modelMatrixIdx = drawElements[idx].modelMatrixIdx;
+    mat4 modelMatrix = modelMatrices[modelMatrixIdx];
+    gl_Position = projViewMatrix * modelMatrix * initPos;
+}
+```
+
+Changes in `ShadowRender` are also pretty similar as the ones in the `ScenRender` class:
+
+```java
+public class ShadowRender {
+
+    private static final int COMMAND_SIZE = 5 * 4;
+    ...
+    private int staticRenderBufferHandle;
+    ...
+    public void cleanup() {
+        shaderProgram.cleanup();
+        shadowBuffer.cleanup();
+        glDeleteBuffers(staticRenderBufferHandle);
+    }
+
+    private void createUniforms() {
+        ...
+        for (int i = 0; i < SceneRender.MAX_DRAW_ELEMENTS; i++) {
+            String name = "drawElements[" + i + "]";
+            uniformsMap.createUniform(name + ".modelMatrixIdx");
+        }
+
+        for (int i = 0; i < SceneRender.MAX_ENTITIES; i++) {
+            uniformsMap.createUniform("modelMatrices[" + i + "]");
+        }
+    }
+    ...
+}
+```
+
+The `createUniforms` method needs to be update to use the new uniforms and the `cleanup` one needs to free the indirect draw buffer. The `render` methdod will use now the `glMultiDrawElementsIndirect`instead of submitting individal draw commands for meshes and entities:
+
+```java
+public class ShadowRender {
+    ...
+    public void render(Scene scene, RenderBuffers renderBuffers) {
+        CascadeShadow.updateCascadeShadows(cascadeShadows, scene);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer.getDepthMapFBO());
+        glViewport(0, 0, ShadowBuffer.SHADOW_MAP_WIDTH, ShadowBuffer.SHADOW_MAP_HEIGHT);
+
+        shaderProgram.bind();
+
+        int entityIdx = 0;
+        for (Model model : scene.getModelMap().values()) {
+            List<Entity> entities = model.getEntitiesList();
+            for (Entity entity : entities) {
+                uniformsMap.setUniform("modelMatrices[" + entityIdx + "]", entity.getModelMatrix());
+                entityIdx++;
+            }
+        }
+
+        for (int i = 0; i < CascadeShadow.SHADOW_MAP_CASCADE_COUNT; i++) {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowBuffer.getDepthMapTexture().getIds()[i], 0);
+            glClear(GL_DEPTH_BUFFER_BIT);
+        }
+
+        // Static meshes
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, staticRenderBufferHandle);
+        glBindVertexArray(renderBuffers.getStaticVaoId());
+        for (int i = 0; i < CascadeShadow.SHADOW_MAP_CASCADE_COUNT; i++) {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowBuffer.getDepthMapTexture().getIds()[i], 0);
+
+            CascadeShadow shadowCascade = cascadeShadows.get(i);
+            uniformsMap.setUniform("projViewMatrix", shadowCascade.getProjViewMatrix());
+
+            glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, staticDrawCount, 0);
+        }
+        glBindVertexArray(0);
+
+        shaderProgram.unbind();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    ...
+}
+```
+Finally, we need a similar method to set up the indirect draw buffer (which will be encpasulated into a `setupData` just to maintain the same style):
+
+```java
+public class ShadowRender {
+    ...
+    public void setupData(Scene scene) {
+        setupStaticCommandBuffer(scene);
+    }
+
+    private void setupStaticCommandBuffer(Scene scene) {
+        List<Model> modelList = scene.getModelMap().values().stream().filter(m -> !m.isAnimated()).toList();
+        Map<String, Integer> entitiesIdxMap = new HashMap<>();
+        int entityIdx = 0;
+        int numMeshes = 0;
+        for (Model model : scene.getModelMap().values()) {
+            List<Entity> entities = model.getEntitiesList();
+            numMeshes += model.getMeshDrawDataList().size();
+            for (Entity entity : entities) {
+                entitiesIdxMap.put(entity.getId(), entityIdx);
+                entityIdx++;
+            }
+        }
+
+        int firstIndex = 0;
+        int baseInstance = 0;
+        int drawElement = 0;
+        shaderProgram.bind();
+        ByteBuffer commandBuffer = MemoryUtil.memAlloc(numMeshes * COMMAND_SIZE);
+        for (Model model : modelList) {
+            List<Entity> entities = model.getEntitiesList();
+            int numEntities = entities.size();
+            for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
+                // count
+                commandBuffer.putInt(meshDrawData.vertices());
+                // instanceCount
+                commandBuffer.putInt(numEntities);
+                commandBuffer.putInt(firstIndex);
+                // baseVertex
+                commandBuffer.putInt(meshDrawData.offset());
+                commandBuffer.putInt(baseInstance);
+
+                firstIndex += meshDrawData.vertices();
+                baseInstance += entities.size();
+
+                for (Entity entity : entities) {
+                    String name = "drawElements[" + drawElement + "]";
+                    uniformsMap.setUniform(name + ".modelMatrixIdx", entitiesIdxMap.get(entity.getId()));
+                    drawElement++;
+                }
+            }
+        }
+        commandBuffer.flip();
+        shaderProgram.unbind();
+
+        staticDrawCount = commandBuffer.remaining() / COMMAND_SIZE;
+
+        staticRenderBufferHandle = glGenBuffers();
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, staticRenderBufferHandle);
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, commandBuffer, GL_DYNAMIC_DRAW);
+
+        MemoryUtil.memFree(commandBuffer);
+    }
+}
+```
+
+In the `Render` class, we just need to instantiate the `RenderBuffers` class and provide a new method `setupData` which can be called when every model and entity has been created to create the indirect drawing buffers and associated data.
+
+```java
+public class Render {
+    ...
+    private RenderBuffers renderBuffers;
+    ...
+    public Render(Window window) {
+        ...
+        renderBuffers = new RenderBuffers();
+    }
+
+    public void cleanup() {
+        ...
+        renderBuffers.cleanup();
+    }
+    ...
+    public void render(Window window, Scene scene) {
+        shadowRender.render(scene, renderBuffers);
+        sceneRender.render(scene, renderBuffers, gBuffer);
+        ...
+    }
+    ...
+    public void setupData(Scene scene) {
+        renderBuffers.loadStaticModels(scene);
+        renderBuffers.loadAnimatedModels(scene);
+        sceneRender.setupData(scene);
+        shadowRender.setupData(scene);
+        List<Model> modelList = new ArrayList<>(scene.getModelMap().values());
+        modelList.forEach(m -> m.getMeshDataList().clear());
+    }
+}
+```
+
+We need toi update the `TextureCache` class to provide a method to return all the textures:
+
+```java
+public class TextureCache {
+    ...
+    public Collection<Texture> getAll() {
+        return textureMap.values();
+    }
+    ...
+}
+```
+
+Since we have modified the class hierarchy that deals with models and materials, we need to update the `SkyBox` class (loading individual models require now additional steps):
+
+```java
+public class SkyBox {
+
+    private Material material;
+    private Mesh mesh;
+    ...
+    public SkyBox(String skyBoxModelPath, TextureCache textureCache, MaterialCache materialCache) {
+        skyBoxModel = ModelLoader.loadModel("skybox-model", skyBoxModelPath, textureCache, materialCache, false);
+        MeshData meshData = skyBoxModel.getMeshDataList().get(0);
+        material = materialCache.getMaterial(meshData.getMaterialIdx());
+        mesh = new Mesh(meshData);
+        skyBoxModel.getMeshDataList().clear();
+        skyBoxEntity = new Entity("skyBoxEntity-entity", skyBoxModel.getId());
+    }
+
+    public void cleanuo() {
+        mesh.cleanup();
+    }
+
+    public Material getMaterial() {
+        return material;
+    }
+
+    public Mesh getMesh() {
+        return mesh;
+    }
+    ...
+}
+```
+
+These changes also affect the `SkyBoxRender` class. For sky bos render we will not use indirect drawing (it is not worth it since we will be rendering just one mesh):
+
+```java
+public class SkyBoxRender {
+    ...
+    public void render(Scene scene) {
+        SkyBox skyBox = scene.getSkyBox();
+        if (skyBox == null) {
+            return;
+        }
+        shaderProgram.bind();
+
+        uniformsMap.setUniform("projectionMatrix", scene.getProjection().getProjMatrix());
+        viewMatrix.set(scene.getCamera().getViewMatrix());
+        viewMatrix.m30(0);
+        viewMatrix.m31(0);
+        viewMatrix.m32(0);
+        uniformsMap.setUniform("viewMatrix", viewMatrix);
+        uniformsMap.setUniform("txtSampler", 0);
+
+        Entity skyBoxEntity = skyBox.getSkyBoxEntity();
+        TextureCache textureCache = scene.getTextureCache();
+        Material material = skyBox.getMaterial();
+        Mesh mesh = skyBox.getMesh();
+        Texture texture = textureCache.getTexture(material.getTexturePath());
+        glActiveTexture(GL_TEXTURE0);
+        texture.bind();
+
+        uniformsMap.setUniform("diffuse", material.getDiffuseColor());
+        uniformsMap.setUniform("hasTexture", texture.getTexturePath().equals(TextureCache.DEFAULT_TEXTURE) ? 0 : 1);
+
+        glBindVertexArray(mesh.getVaoId());
+
+        uniformsMap.setUniform("modelMatrix", skyBoxEntity.getModelMatrix());
+        glDrawElements(GL_TRIANGLES, mesh.getNumVertices(), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+
+        shaderProgram.unbind();
+    }
+    ...
+}
+```
+
+In the `Scene` class, we just do not need to invoke the `Scene` `cleanup` method (since the data associated to the buffers is in the `RenderBuffers` class):
+
+```java
+public class Engine {
+    ...
+    private void cleanup() {
+        appLogic.cleanup();
+        render.cleanup();
+        window.cleanup();
+    }
+    ...
+}
+```
+
+Finally, in the `Main` class, we will load two entities associated to a cube model. We will rotate them independently to check that the code works ok. The most important part is to cal the `Render` class `setupData` method when everything is loaded.
+
+```java
+public class Main implements IAppLogic {
+    ...
+    private Entity cubeEntity1;
+    private Entity cubeEntity2;
+    ...
+    private float rotation;
+
+    public static void main(String[] args) {
+        ...
+        Engine gameEng = new Engine("chapter-20", opts, main);
+        ...
+    }
+
+    public void init(Window window, Scene scene, Render render) {
+        ...
+        Model terrainModel = ModelLoader.loadModel(terrainModelId, "resources/models/terrain/terrain.obj",
+                scene.getTextureCache(), scene.getMaterialCache(), false);
+        ...
+        Model cubeModel = ModelLoader.loadModel("cube-model", "resources/models/cube/cube.obj",
+                scene.getTextureCache(), scene.getMaterialCache(), false);
+        scene.addModel(cubeModel);
+        cubeEntity1 = new Entity("cube-entity-1", cubeModel.getId());
+        cubeEntity1.setPosition(0, 2, -1);
+        cubeEntity1.updateModelMatrix();
+        scene.addEntity(cubeEntity1);
+
+        cubeEntity2 = new Entity("cube-entity-2", cubeModel.getId());
+        cubeEntity2.setPosition(-2, 2, -1);
+        cubeEntity2.updateModelMatrix();
+        scene.addEntity(cubeEntity2);
+
+        render.setupData(scene);
+        ...
+        SkyBox skyBox = new SkyBox("resources/models/skybox/skybox.obj", scene.getTextureCache(),
+                scene.getMaterialCache());
+        ...
+    }
+    ...
+    public void update(Window window, Scene scene, long diffTimeMillis) {
+        rotation += 1.5;
+        if (rotation > 360) {
+            rotation = 0;
+        }
+        cubeEntity1.setRotation(1, 1, 1, (float) Math.toRadians(rotation));
+        cubeEntity1.updateModelMatrix();
+
+        cubeEntity2.setRotation(1, 1, 1, (float) Math.toRadians(360 - rotation));
+        cubeEntity2.updateModelMatrix();
+    }
+}
+
+```
+
+With all of that changes implemented you should be able to see something similar to this.
+
+![Screen shot](screenshot.png)
+
 
 [Next chapter](../chapter-21/chapter-21.md)
