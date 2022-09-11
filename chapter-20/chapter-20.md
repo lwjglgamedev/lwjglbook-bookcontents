@@ -860,7 +860,7 @@ We will need a new method to the set up the values for the materials uniform:
 ```java
 public class RenderBuffers {
     ...
-    public void setupMaterialsUniform(TextureCache textureCache, MaterialCache materialCache) {
+    private void setupMaterialsUniform(TextureCache textureCache, MaterialCache materialCache) {
         List<Texture> textures = textureCache.getAll().stream().toList();
         int numTextures = textures.size();
         if (numTextures > MAX_TEXTURES) {
