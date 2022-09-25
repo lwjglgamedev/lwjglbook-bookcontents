@@ -456,7 +456,7 @@ public class RenderBuffers {
 
 We start by creating a VAO (which will be used for static models), and then iterate over the meshes of the models. We will use a single buffer to hold all the data, so we just iterate over those elements to get the final buffer size. We will calculate the number of position elements, normals, etc. We use that first loop to also populate the offset information that we wil store in a list that will contain `RenderBuffers.MeshDrawData` instances. After that we will create a single VBO. You will find a major difference with the one in the `Mesh` class that did a similar task, creating the VAO and VBOs. In this case, we use a single VBO for positions, normals etc. We just load all that data row by row instead of using separate VBOs. This is done in the `populateMeshBuffer` (which we will see after this). After that, we create the index VBO which will contain the indices for all the meshes of all the models.
 
-The `` is defined like this:
+The `MeshDrawData` class is defined like this:
 
 ```java
 public class RenderBuffers {
