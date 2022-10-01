@@ -329,14 +329,350 @@ As in the previous methods, we will store the weights and bone indices informati
 
 ## Compute shaders
 
-TBD: AnimationRender
+It is turn now to implement animation transformations through compute shaders. As it has been said before, a  shader is like any other shader but it does not compose any restrictions on its inputs and its outputs. We will use them to transform data, they will have access to the global buffers that hold information about binding poses and animation transformation matrices and it will dump the result into another buffer. The shader code for animations (`anim.comp`) is defined like this:
+
+```glsl
+#version 460
+
+layout (std430, binding=0) readonly buffer srcBuf {
+    float data[];
+} srcVector;
+
+layout (std430, binding=1) readonly buffer weightsBuf {
+    float data[];
+} weightsVector;
+
+layout (std430, binding=2) readonly buffer bonesBuf {
+    mat4 data[];
+} bonesMatrices;
+
+layout (std430, binding=3) buffer dstBuf {
+    float data[];
+} dstVector;
+
+struct DrawParameters
+{
+    int srcOffset;
+    int srcSize;
+    int weightsOffset;
+    int bonesMatricesOffset;
+    int dstOffset;
+};
+uniform DrawParameters drawParameters;
+
+layout (local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+void main()
+{
+    int baseIdx = int(gl_GlobalInvocationID.x) * 14;
+    uint baseIdxWeightsBuf  = drawParameters.weightsOffset + int(gl_GlobalInvocationID.x) * 8;
+    uint baseIdxSrcBuf = drawParameters.srcOffset + baseIdx;
+    uint baseIdxDstBuf = drawParameters.dstOffset + baseIdx;
+    if (baseIdx >= drawParameters.srcSize) {
+        return;
+    }
+
+    vec4 weights = vec4(weightsVector.data[baseIdxWeightsBuf], weightsVector.data[baseIdxWeightsBuf + 1], weightsVector.data[baseIdxWeightsBuf + 2], weightsVector.data[baseIdxWeightsBuf + 3]);
+    ivec4 bonesIndices = ivec4(weightsVector.data[baseIdxWeightsBuf + 4], weightsVector.data[baseIdxWeightsBuf + 5], weightsVector.data[baseIdxWeightsBuf + 6], weightsVector.data[baseIdxWeightsBuf + 7]);
+
+    vec4 position = vec4(srcVector.data[baseIdxSrcBuf], srcVector.data[baseIdxSrcBuf + 1], srcVector.data[baseIdxSrcBuf + 2], 1);
+    position =
+    weights.x * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.x] * position +
+    weights.y * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.y] * position +
+    weights.z * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.z] * position +
+    weights.w * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.w] * position;
+    dstVector.data[baseIdxDstBuf] = position.x / position.w;
+    dstVector.data[baseIdxDstBuf + 1] = position.y / position.w;
+    dstVector.data[baseIdxDstBuf + 2] = position.z / position.w;
+
+    baseIdxSrcBuf += 3;
+    baseIdxDstBuf += 3;
+    vec4 normal = vec4(srcVector.data[baseIdxSrcBuf], srcVector.data[baseIdxSrcBuf + 1], srcVector.data[baseIdxSrcBuf + 2], 0);
+    normal =
+    weights.x * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.x] * normal +
+    weights.y * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.y] * normal +
+    weights.z * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.z] * normal +
+    weights.w * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.w] * normal;
+    dstVector.data[baseIdxDstBuf] = normal.x;
+    dstVector.data[baseIdxDstBuf + 1] = normal.y;
+    dstVector.data[baseIdxDstBuf + 2] = normal.z;
+
+    baseIdxSrcBuf += 3;
+    baseIdxDstBuf += 3;
+    vec4 tangent = vec4(srcVector.data[baseIdxSrcBuf], srcVector.data[baseIdxSrcBuf + 1], srcVector.data[baseIdxSrcBuf + 2], 0);
+    tangent =
+    weights.x * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.x] * tangent +
+    weights.y * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.y] * tangent +
+    weights.z * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.z] * tangent +
+    weights.w * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.w] * tangent;
+    dstVector.data[baseIdxDstBuf] = tangent.x;
+    dstVector.data[baseIdxDstBuf + 1] = tangent.y;
+    dstVector.data[baseIdxDstBuf + 2] = tangent.z;
+
+    baseIdxSrcBuf += 3;
+    baseIdxDstBuf += 3;
+    vec4 bitangent = vec4(srcVector.data[baseIdxSrcBuf], srcVector.data[baseIdxSrcBuf + 1], srcVector.data[baseIdxSrcBuf + 2], 0);
+    bitangent =
+    weights.x * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.x] * bitangent +
+    weights.y * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.y] * bitangent +
+    weights.z * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.z] * bitangent +
+    weights.w * bonesMatrices.data[drawParameters.bonesMatricesOffset + bonesIndices.w] * bitangent;
+    dstVector.data[baseIdxDstBuf] = bitangent.x;
+    dstVector.data[baseIdxDstBuf + 1] = bitangent.y;
+    dstVector.data[baseIdxDstBuf + 2] = bitangent.z;
+
+    baseIdxSrcBuf += 3;
+    baseIdxDstBuf += 3;
+    vec2 textCoords = vec2(srcVector.data[baseIdxSrcBuf], srcVector.data[baseIdxSrcBuf + 1]);
+    dstVector.data[baseIdxDstBuf] = textCoords.x;
+    dstVector.data[baseIdxDstBuf + 1] = textCoords.y;
+}
+```
+
+As you can see the code is very similar to the one used in previous chapters for animation (unrolling the loops). You wil notice that we need to apply an offset for each mesh, since the data is now stored in a common buffer. In order to support push constants in the compute shader. The input / output data is defined as a set of buffers:
+* `srcVector`: this buffer will contain vertices information (positions, normals, etc.).
+* `weightsVector`: this buffer will contain the weights for the current animation state for a specific mesh and entity.
+* `bonesMatrices`: the same but with bones matrices information.
+* `dstVector`: this buffer will hold the result of applying animation transformations.
+
+The interesting thing is how we compute that offset. The `gl_GlobalInvocationID` variable will contain the index of work item currently being execute din the compute shader. In our case, we will create as many work items as "chunks" we will have in the global buffer. A chunk models a vertex data, that its its position, normals, texture coordinates etc. Therefore, por vertices data each time the work item is increased, we need to move forward in the buffer 14 positions (14 floats: 3 for positions,. 3 for normals, 3 for bitangents, 3 for tangent and 2 for texture coordinates). The same applies for weights buffers which holds data for weights (4 floats) and bone indices (4 floats) associated to each vertex. We use also the vertex offset to move long the binding poses buffer and the destination buffer along with the `drawParameters` data which point to th ebase offset for each mesh and entity.
+
+We will use this shader in a new class named `AnimationRender` which is defined like this:
+
+```java
+package org.lwjglb.engine.graph;
+
+import org.lwjglb.engine.scene.*;
+
+import java.util.*;
+
+import static org.lwjgl.opengl.GL43.*;
+
+public class AnimationRender {
+
+    private ShaderProgram shaderProgram;
+    private UniformsMap uniformsMap;
+
+    public AnimationRender() {
+        List<ShaderProgram.ShaderModuleData> shaderModuleDataList = new ArrayList<>();
+        shaderModuleDataList.add(new ShaderProgram.ShaderModuleData("resources/shaders/anim.comp", GL_COMPUTE_SHADER));
+        shaderProgram = new ShaderProgram(shaderModuleDataList);
+        createUniforms();
+    }
+
+    public void cleanup() {
+        shaderProgram.cleanup();
+    }
+
+    private void createUniforms() {
+        uniformsMap = new UniformsMap(shaderProgram.getProgramId());
+        uniformsMap.createUniform("drawParameters.srcOffset");
+        uniformsMap.createUniform("drawParameters.srcSize");
+        uniformsMap.createUniform("drawParameters.weightsOffset");
+        uniformsMap.createUniform("drawParameters.bonesMatricesOffset");
+        uniformsMap.createUniform("drawParameters.dstOffset");
+    }
+
+    public void render(Scene scene, RenderBuffers globalBuffer) {
+        shaderProgram.bind();
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, globalBuffer.getBindingPosesBuffer());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, globalBuffer.getBonesIndicesWeightsBuffer());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, globalBuffer.getBonesMatricesBuffer());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, globalBuffer.getDestAnimationBuffer());
+
+        int dstOffset = 0;
+        for (Model model : scene.getModelMap().values()) {
+            if (model.isAnimated()) {
+                for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
+                    RenderBuffers.AnimMeshDrawData animMeshDrawData = meshDrawData.animMeshDrawData();
+                    Entity entity = animMeshDrawData.entity();
+                    Model.AnimatedFrame frame = entity.getAnimationData().getCurrentFrame();
+                    int groupSize = (int) Math.ceil((float) meshDrawData.sizeInBytes() / (14 * 4));
+                    uniformsMap.setUniform("drawParameters.srcOffset", animMeshDrawData.bindingPoseOffset());
+                    uniformsMap.setUniform("drawParameters.srcSize", meshDrawData.sizeInBytes() / 4);
+                    uniformsMap.setUniform("drawParameters.weightsOffset", animMeshDrawData.weightsOffset());
+                    uniformsMap.setUniform("drawParameters.bonesMatricesOffset", frame.getOffset());
+                    uniformsMap.setUniform("drawParameters.dstOffset", dstOffset);
+                    glDispatchCompute(groupSize, 1, 1);
+                    dstOffset += meshDrawData.sizeInBytes() / 4;
+                }
+            }
+        }
+
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        shaderProgram.unbind();
+    }
+}
+```
+
+As you can see, the definition is quite simple, when creating the shader we need to set up the `GL_COMPUTE_SHADER` to indicate that this is the compute shader. The uniforms that wew ill use will contain the offset in binding pose buffer, weights and matrices buffer and destination buffer. In the `render` method we just iterate over the models and get the mesh draw data for each entity to dispatch a call to the compute shader by invoking the `glDispatchCompute`. The key, again tos the `groupSize` variable. As you can see we need to invoke the shader as many times as vertices chunks there are in the mesh.
 
 ## Other changes
 
-TODO:
-- SceneRender
-- ShadowRender
-- Main
+We need to update the `SceneRender` class to render the entities associated to animated models. The changes are shown below:
+
+```java
+public class SceneRender {
+    ...
+    private int animDrawCount;
+    private int animRenderBufferHandle;
+    ...
+    public void cleanup() {
+        ...
+        glDeleteBuffers(animRenderBufferHandle);
+    }
+    ...
+    public void render(Scene scene, RenderBuffers renderBuffers, GBuffer gBuffer) {
+        ...
+        // Animated meshes
+        drawElement = 0;
+        modelList = scene.getModelMap().values().stream().filter(m -> m.isAnimated()).toList();
+        for (Model model : modelList) {
+            for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
+                RenderBuffers.AnimMeshDrawData animMeshDrawData = meshDrawData.animMeshDrawData();
+                Entity entity = animMeshDrawData.entity();
+                String name = "drawElements[" + drawElement + "]";
+                uniformsMap.setUniform(name + ".modelMatrixIdx", entitiesIdxMap.get(entity.getId()));
+                uniformsMap.setUniform(name + ".materialIdx", meshDrawData.materialIdx());
+                drawElement++;
+            }
+        }
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, animRenderBufferHandle);
+        glBindVertexArray(renderBuffers.getAnimVaoId());
+        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, animDrawCount, 0);
+
+        glBindVertexArray(0);
+        glEnable(GL_BLEND);
+        shaderProgram.unbind();
+    }
+
+    private void setupAnimCommandBuffer(Scene scene) {
+        List<Model> modelList = scene.getModelMap().values().stream().filter(m -> m.isAnimated()).toList();
+        int numMeshes = 0;
+        for (Model model : modelList) {
+            numMeshes += model.getMeshDrawDataList().size();
+        }
+
+        int firstIndex = 0;
+        int baseInstance = 0;
+        ByteBuffer commandBuffer = MemoryUtil.memAlloc(numMeshes * COMMAND_SIZE);
+        for (Model model : modelList) {
+            for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
+                // count
+                commandBuffer.putInt(meshDrawData.vertices());
+                // instanceCount
+                commandBuffer.putInt(1);
+                commandBuffer.putInt(firstIndex);
+                // baseVertex
+                commandBuffer.putInt(meshDrawData.offset());
+                commandBuffer.putInt(baseInstance);
+
+                firstIndex += meshDrawData.vertices();
+                baseInstance++;
+            }
+        }
+        commandBuffer.flip();
+
+        animDrawCount = commandBuffer.remaining() / COMMAND_SIZE;
+
+        animRenderBufferHandle = glGenBuffers();
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, animRenderBufferHandle);
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, commandBuffer, GL_DYNAMIC_DRAW);
+
+        MemoryUtil.memFree(commandBuffer);
+    }
+
+    public void setupData(Scene scene) {
+        ...
+        setupAnimCommandBuffer(scene);
+        ...
+    }
+    ...
+}
+```
+
+The code to render animated models is quite similar as the one used for static entities. The differences is that we are not grouping entities that share the same model, we need to record draw instructions for each of the entities and associated meshes.
+
+We need also to update the `ShadowRender` class to render animated models:
+
+```java
+public class ShadowRender {
+    ...
+    private int animDrawCount;
+    private int animRenderBufferHandle;
+    ...
+    public void cleanup() {
+        ...
+        glDeleteBuffers(animRenderBufferHandle);
+    }
+    ...
+    public void render(Scene scene, RenderBuffers renderBuffers) {
+        ...
+        // Anim meshes
+        drawElement = 0;
+        modelList = scene.getModelMap().values().stream().filter(m -> m.isAnimated()).toList();
+        for (Model model : modelList) {
+            for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
+                RenderBuffers.AnimMeshDrawData animMeshDrawData = meshDrawData.animMeshDrawData();
+                Entity entity = animMeshDrawData.entity();
+                String name = "drawElements[" + drawElement + "]";
+                uniformsMap.setUniform(name + ".modelMatrixIdx", entitiesIdxMap.get(entity.getId()));
+                drawElement++;
+            }
+        }
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, animRenderBufferHandle);
+        glBindVertexArray(renderBuffers.getAnimVaoId());
+        for (int i = 0; i < CascadeShadow.SHADOW_MAP_CASCADE_COUNT; i++) {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowBuffer.getDepthMapTexture().getIds()[i], 0);
+
+            CascadeShadow shadowCascade = cascadeShadows.get(i);
+            uniformsMap.setUniform("projViewMatrix", shadowCascade.getProjViewMatrix());
+
+            glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, animDrawCount, 0);
+        }
+
+        glBindVertexArray(0);
+    }
+
+    private void setupAnimCommandBuffer(Scene scene) {
+        List<Model> modelList = scene.getModelMap().values().stream().filter(m -> m.isAnimated()).toList();
+        int numMeshes = 0;
+        for (Model model : modelList) {
+            numMeshes += model.getMeshDrawDataList().size();
+        }
+
+        int firstIndex = 0;
+        int baseInstance = 0;
+        ByteBuffer commandBuffer = MemoryUtil.memAlloc(numMeshes * COMMAND_SIZE);
+        for (Model model : modelList) {
+            for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
+                RenderBuffers.AnimMeshDrawData animMeshDrawData = meshDrawData.animMeshDrawData();
+                Entity entity = animMeshDrawData.entity();
+                // count
+                commandBuffer.putInt(meshDrawData.vertices());
+                // instanceCount
+                commandBuffer.putInt(1);
+                commandBuffer.putInt(firstIndex);
+                // baseVertex
+                commandBuffer.putInt(meshDrawData.offset());
+                commandBuffer.putInt(baseInstance);
+
+                firstIndex += meshDrawData.vertices();
+                baseInstance++;
+            }
+        }
+        commandBuffer.flip();
+
+        animDrawCount = commandBuffer.remaining() / COMMAND_SIZE;
+
+        animRenderBufferHandle = glGenBuffers();
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, animRenderBufferHandle);
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, commandBuffer, GL_DYNAMIC_DRAW);
+
+        MemoryUtil.memFree(commandBuffer);
+    }
+}
+```
 
 In the `Render` class we just need to instantiate the `AnimationRender` class, and use it in the `render` loop and the `cleanup` method. In the `render` loop we will invoke the `AnimationRender` class `render` method at the very beginning, so animation transformations are applied prior to render the scene.
 
