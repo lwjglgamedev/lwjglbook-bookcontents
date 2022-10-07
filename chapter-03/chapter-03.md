@@ -137,7 +137,6 @@ package org.lwjglb.engine.graph;
 
 import org.lwjgl.opengl.GL30;
 import org.lwjglb.engine.Utils;
-import org.tinylog.Logger;
 
 import java.util.*;
 
@@ -198,17 +197,19 @@ public class ShaderProgram {
             throw new RuntimeException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
         }
 
-        glValidateProgram(programId);
-        if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
-            Logger.warn("Warning validating Shader code: {}", glGetProgramInfoLog(programId, 1024));
-        }
-
         shaderModules.forEach(s -> glDetachShader(programId, s));
         shaderModules.forEach(GL30::glDeleteShader);
     }
 
     public void unbind() {
         glUseProgram(0);
+    }
+
+    public void validate() {
+        glValidateProgram(programId);
+        if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
+            throw new RuntimeException("Error validating Shader code: " + glGetProgramInfoLog(programId, 1024));
+        }
     }
 
     public record ShaderModuleData(String shaderFile, int shaderType) {
@@ -218,7 +219,7 @@ public class ShaderProgram {
 
 The constructor of the `ShaderProgram` receives a list of `ShaderModuleData` instances which define the shader module typ (vertex, fragment, etc.) and the path to the source file which contains the shader module code. The constructor starts by creating a new OpenGL shader program by compiling firs each shader module (by invoking the `createShader` method) and finally linking all together (by invoking the `link` method). Once the shader program has been linked, the compiled vertex and fragment shaders can be freed up \(by calling `glDetachShader`\).
 
-Regarding verification, this is done through the `glValidateProgram` call. This method is used mainly for debugging purposes, and it should be removed when your game reaches production stage. This method tries to validate if the shader is correct given the **current OpenGL state**. This means, that validation may fail in some cases even if the shader is correct, due to the fact that the current state is not complete enough to run the shader \(some data may have not been uploaded yet\). So, instead of failing, we just log an error message to the standard error output.
+The `validate` method, basically calls the `glValidateProgram` function. This function is used mainly for debugging purposes, and it should not be used when your game reaches production stage. This method tries to validate if the shader is correct given the **current OpenGL state**. This means, that validation may fail in some cases even if the shader is correct, due to the fact that the current state is not complete enough to run the shader \(some data may have not been uploaded yet\). You should call it when all required input and output data is properly bound (better just before performing any drawing call).
 
 `ShaderProgram` also provides methods to use this program for rendering, that is binding it, another one for unbinding (when we are don with it) and finally, a cleanup method to free all the resources when they are no longer needed.
 
