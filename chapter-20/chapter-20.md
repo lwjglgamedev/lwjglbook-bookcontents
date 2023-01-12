@@ -607,7 +607,7 @@ The key here is to get the proper index to access the `drawElements` size. We us
 The scene fragment shader (`scene.frag`) is defined like this:
 
 ```glsl
-#version 330
+#version 400
 
 const int MAX_MATERIALS  = 20;
 const int MAX_TEXTURES = 16;
@@ -664,7 +664,7 @@ void main() {
 }
 ```
 
-The main changes are related to the way we access material information and textures. We will now have an array of materials information, which will be accessed by the index we calculated in the vertex shader which is now in the `outMaterialIdx` input variable (which has the `flat` modifier which states that this value should not be interpolated from vertex to fragment stage). We will be using an array of textures to access either regular textures or normal maps. The index to those textures are stored now in the `Material` struct.
+The main changes are related to the way we access material information and textures. We will now have an array of materials information, which will be accessed by the index we calculated in the vertex shader which is now in the `outMaterialIdx` input variable (which has the `flat` modifier which states that this value should not be interpolated from vertex to fragment stage). We will be using an array of textures to access either regular textures or normal maps. The index to those textures are stored now in the `Material` struct. Since we will be accessing the array of samplers using non constant expressions we need to upgrade GLSL version to 400 (that feature is only available since OpenGL 4.0)
 
 
 Now it is the turn to examine the changes in the `SceneRender` class. We will start by defining a set of constants that will be used in the code, one handle for the buffer that will have the indirect drawing instructions (`staticRenderBufferHandle`) and the number of drawing commands (`staticDrawCount`). We will need also to modify the `createUniforms` method according to the changes in the shaders shown before:
