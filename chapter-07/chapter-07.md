@@ -402,6 +402,32 @@ public class SceneRender {
 
 As you can see, we first set the texture sampler uniform to the `0` value. Let's explain why we do this. A graphics card has several spaces or slots to store textures. Each of these spaces is called a texture unit. When we are working with textures we must set the texture unit that we want to work with. In this case we are using just one texture, so we will use the texture unit `0`. The uniform has a `sampler2D` type and will hold the value of the texture unit that we want to work with.. When we iterate over models and materials we get the texture associated to each material from the cache, activate the texture unit by calling the `glActiveTexture` function with the parameter `GL_TEXTURE0`and bind it. This is the way we relate the texture unit and the texture identifier.
 
+We need to modify also the `UniformsMap` class to add a new method which accepts an integer to set up the sampler value, which will be called also `setUniform` but accepting the name of the uniform and an integer value. Since we will be repeating some code between the `setUniform` method used to set up matrices and this new one, we will extract the part of the code that retrieves the uniform location to a new method named `getUniformLocation`- The changes in the `UniformsMap` class are shown below:
+
+```java
+public class UniformsMap {
+    ...
+    private int getUniformLocation(String uniformName) {
+        Integer location = uniforms.get(uniformName);
+        if (location == null) {
+            throw new RuntimeException("Could not find uniform [" + uniformName + "]");
+        }
+        return location.intValue();
+    }
+
+    public void setUniform(String uniformName, int value) {
+        glUniform1i(getUniformLocation(uniformName), value);
+    }
+
+    public void setUniform(String uniformName, Matrix4f value) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(getUniformLocation(uniformName), false, value.get(stack.mallocFloat(16)));
+        }
+    }
+    ...
+}
+```
+
 Right now, we have just modified our code base to support textures. Now we need to setup texture coordinates for our 3D cube. Our texture image file will be something like this:
 
 ![Cube texture](cube_texture.png)
