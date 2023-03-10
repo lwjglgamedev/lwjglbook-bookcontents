@@ -144,6 +144,7 @@ public class GuiRender {
         shaderProgram = new ShaderProgram(shaderModuleDataList);
         createUniforms();
         createUIResources(window);
+        setupKeyCallBack(window);
     }
 
     public void cleanup() {
@@ -193,6 +194,41 @@ public class GuiRender {
     ...
 }
 ```
+
+The `setupKeyCallBack` method is required to properly process key events in Imgui and is defined like this:
+```java
+public class GuiRender {
+    ...
+    private void setupKeyCallBack(Window window) {
+        glfwSetKeyCallback(window.getWindowHandle(), (handle, key, scancode, action, mods) -> {
+                    window.keyCallBack(key, action);
+                    ImGuiIO io = ImGui.getIO();
+                    if (!io.getWantCaptureKeyboard()) {
+                        return;
+                    }
+                    if (action == GLFW_PRESS) {
+                        io.setKeysDown(key, true);
+                    } else if (action == GLFW_RELEASE) {
+                        io.setKeysDown(key, false);
+                    }
+                    io.setKeyCtrl(io.getKeysDown(GLFW_KEY_LEFT_CONTROL) || io.getKeysDown(GLFW_KEY_RIGHT_CONTROL));
+                    io.setKeyShift(io.getKeysDown(GLFW_KEY_LEFT_SHIFT) || io.getKeysDown(GLFW_KEY_RIGHT_SHIFT));
+                    io.setKeyAlt(io.getKeysDown(GLFW_KEY_LEFT_ALT) || io.getKeysDown(GLFW_KEY_RIGHT_ALT));
+                    io.setKeySuper(io.getKeysDown(GLFW_KEY_LEFT_SUPER) || io.getKeysDown(GLFW_KEY_RIGHT_SUPER));
+                }
+        );
+
+        glfwSetCharCallback(window.getWindowHandle(), (handle, c) -> {
+            ImGuiIO io = ImGui.getIO();
+            if (!io.getWantCaptureKeyboard()) {
+                return;
+            }
+            io.addInputCharacter(c);
+        });
+        ...
+}
+```
+Firs we need to setup a GLFW key callback which first calls `Window` key call back to handle exit key events to close the window. After that, we set up the state of Imgui according to key pressed or released events. Finally, we need to setup a char call back so text input widgets can process those events.
 
 Let's view the `render` method now:
 
@@ -427,12 +463,15 @@ public class Main implements IAppLogic, IGuiInstance {
     }
     ...
     public void input(Window window, Scene scene, long diffTimeMillis, boolean inputConsumed) {
+        if (inputConsumed) {
+            return;
+        }
         ...
     }
 }
 ```
 
-In the `drawGui` method we just setup a new frame, the window position and just invoke the `showDemoWindow` to generate Imgui's demo window. After ending the frame it is very important to call the `render` this is what will generate the set of commands upon the GUI structure defined previously. The `handleGuiInput` first gets mouse position and updates IMgui's IO class with that information and mouse button status. We also return a boolean that indicates that input has been capture by Imgui. Finally, we just need to update the `input`method to receive that flag (we are not doing anything with it yet, but it is in the interface we are implementing).
+In the `drawGui` method we just setup a new frame, the window position and just invoke the `showDemoWindow` to generate Imgui's demo window. After ending the frame it is very important to call the `render` this is what will generate the set of commands upon the GUI structure defined previously. The `handleGuiInput` first gets mouse position and updates IMgui's IO class with that information and mouse button status. We also return a boolean that indicates that input has been capture by Imgui. Finally, we just need to update the `input` method to receive that flag. In this specific case, if input has already been consumed by the Gui, we just return.
 
 With all those changes you will be able to see Imgui demo window overlapping the rotating cube. You can interact with the different methods an panels to get a glimpse of the capabilities of Imgui.
 
