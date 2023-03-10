@@ -241,7 +241,7 @@ The `MouseInput` class, in its constructor, registers a set of callbacks to proc
 
 The `MouseInput` class provides an input method which should be called when game input is processed. This method calculates the mouse displacement from the previous position and stores it into the `displVec` variable so it can be used by our game.
 
-The `MouseInput` class will be instantiated in our `Window` class, which will also provide a getter to return its instance. It also invokes the input method each time events are polled.
+The `MouseInput` class will be instantiated in our `Window` class, which will also provide a getter to return its instance.
 
 ```java
 public class Window {
@@ -257,9 +257,20 @@ public class Window {
         return mouseInput;
     }
     ...    
-    public void pollEvents() {
+}
+```
+
+In the `Engine` class we will consume mouse input when handling regular input:
+```java
+public class Engine {
+    ...
+    private void run() {
         ...
-        mouseInput.input();
+            if (targetFps <= 0 || deltaFps >= 1) {
+                window.getMouseInput().input();
+                appLogic.input(window, scene, now - initialTime);
+            }
+        ...
     }
     ...
 }

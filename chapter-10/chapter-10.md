@@ -371,6 +371,7 @@ public class Engine {
         while (running && !window.windowShouldClose()) {
             ...
             if (targetFps <= 0 || deltaFps >= 1) {
+                window.getMouseInput().input();
                 boolean inputConsumed = iGuiInstance != null ? iGuiInstance.handleGuiInput(scene, window) : false;
                 appLogic.input(window, scene, now - initialTime, inputConsumed);
             }
