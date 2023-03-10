@@ -228,7 +228,7 @@ public class GuiRender {
         ...
 }
 ```
-Firs we need to setup a GLFW key callback which first calls `Window` key call back to handle exit key events to close the window. After that, we set up the state of Imgui according to key pressed or released events. Finally, we need to setup a char call back so text input widgets can process those events.
+First we need to setup a GLFW key callback which first calls `Window` key call back to handle exit key events to close the window. After that, we set up the state of Imgui according to key pressed or released events. Finally, we need to setup a char call back so text input widgets can process those events.
 
 Let's view the `render` method now:
 
