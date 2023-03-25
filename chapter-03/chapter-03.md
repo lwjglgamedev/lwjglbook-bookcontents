@@ -469,7 +469,7 @@ public class Render {
     }
 
     public void render(Window window, Scene scene) {
-        sceneRender.render(window, scene);
+        sceneRender.render(scene);
     }
 }
 ```
