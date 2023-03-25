@@ -86,7 +86,7 @@ As you can see, it defines some attributes to store the window handle, its width
 * `width`: Desired window width:
 * `ups`: Defines the target number of updates per second (initialized to a default value).
 
-Let's examine the constructor of the `Window+  class:
+Let's examine the constructor of the `Window` class:
 
 ```java
 public class Window {
