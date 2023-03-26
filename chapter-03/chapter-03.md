@@ -469,6 +469,8 @@ public class Render {
     }
 
     public void render(Window window, Scene scene) {
+        ...
+        glViewport(0, 0, window.getWidth(), window.getHeight());
         sceneRender.render(scene);
     }
 }
