@@ -220,6 +220,7 @@ public class Material {
     public void setTexturePath(String texturePath) {
         this.texturePath = texturePath;
     }
+}
 ```
 
 As you can see, `Mesh` instances are now under the `Material` class. Therefore, we need to modify the `Model` class like this:
@@ -400,9 +401,9 @@ public class SceneRender {
 }
 ```
 
-As you can see, we first set the texture sampler uniform to the `0` value. Let's explain why we do this. A graphics card has several spaces or slots to store textures. Each of these spaces is called a texture unit. When we are working with textures we must set the texture unit that we want to work with. In this case we are using just one texture, so we will use the texture unit `0`. The uniform has a `sampler2D` type and will hold the value of the texture unit that we want to work with.. When we iterate over models and materials we get the texture associated to each material from the cache, activate the texture unit by calling the `glActiveTexture` function with the parameter `GL_TEXTURE0`and bind it. This is the way we relate the texture unit and the texture identifier.
+As you can see, we first set the texture sampler uniform to the `0` value. Let's explain why we do this. A graphics card has several spaces or slots to store textures. Each of these spaces is called a texture unit. When we are working with textures we must set the texture unit that we want to work with. In this case we are using just one texture, so we will use the texture unit `0`. The uniform has a `sampler2D` type and will hold the value of the texture unit that we want to work with.. When we iterate over models and materials we get the texture associated to each material from the cache, activate the texture unit by calling the `glActiveTexture` function with the parameter `GL_TEXTURE0` and bind it. This is the way we relate the texture unit and the texture identifier.
 
-We need to modify also the `UniformsMap` class to add a new method which accepts an integer to set up the sampler value, which will be called also `setUniform` but accepting the name of the uniform and an integer value. Since we will be repeating some code between the `setUniform` method used to set up matrices and this new one, we will extract the part of the code that retrieves the uniform location to a new method named `getUniformLocation`- The changes in the `UniformsMap` class are shown below:
+We need to modify also the `UniformsMap` class to add a new method which accepts an integer to set up the sampler value, which will be called also `setUniform` but accepting the name of the uniform and an integer value. Since we will be repeating some code between the `setUniform` method used to set up matrices and this new one, we will extract the part of the code that retrieves the uniform location to a new method named `getUniformLocation`. The changes in the `UniformsMap` class are shown below:
 
 ```java
 public class UniformsMap {
