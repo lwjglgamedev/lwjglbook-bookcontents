@@ -82,7 +82,7 @@ The second method has an extra argument named `flags`. This parameter allows to 
 
 * `aiProcess_LimitBoneWeights`: We will use this parameter when implementing animations, but it basically limit the number of weights that affect a single vertex.
 
-* `aiProcess_PreTransformVertices`: This flag performs some transformation over the data loaded so the model is placed in the origin and the coordinates are corrected to math OpenGL coordinate System. If you have problems with models that are rotated, make sure to use this flag. Important: do not use this flag is you model uses animations, this flag will remove that information.
+* `aiProcess_PreTransformVertices`: This flag performs some transformation over the data loaded so the model is placed in the origin and the coordinates are corrected to math OpenGL coordinate System. If you have problems with models that are rotated, make sure to use this flag. Important: do not use this flag if your model uses animations, this flag will remove that information.
 
 There are many other flags that can be used, you can check them in the LWJGL or Assimp documentation.
 
@@ -185,7 +185,7 @@ public class ModelLoader {
 }
 ```
 
-We first get the material color, in this case the diffuse color (by setting the `AI_MATKEY_COLOR_DIFFUSE` flag). There are many different types of colors which we will use when applying lights, for example we have  diffuse, ambient (for ambient light), specular (for specular factor of lights, etc. After that, we check if the material defines a texture or not. If so, that is if there is a texture path, we store the texture path and delegate texture creation to the `TexturCache` class as in previous examples. In this case, if the material defines a texture we set the diffuse color to a default value, which is black. By doing this we will be able to use both values, diffuse color and texture without checking if there is a texture or not. If the model does not define a texture we will use a default black texture which can be combined with the material color.
+We first get the material color, in this case the diffuse color (by setting the `AI_MATKEY_COLOR_DIFFUSE` flag). There are many different types of colors which we will use when applying lights, for example we have  diffuse, ambient (for ambient light), specular (for specular factor of lights, etc.) After that, we check if the material defines a texture or not. If so, that is if there is a texture path, we store the texture path and delegate texture creation to the `TexturCache` class as in previous examples. In this case, if the material defines a texture we set the diffuse color to a default value, which is black. By doing this we will be able to use both values, diffuse color and texture without checking if there is a texture or not. If the model does not define a texture we will use a default black texture which can be combined with the material color.
 
 The `processMesh` method is defined like this.
 
