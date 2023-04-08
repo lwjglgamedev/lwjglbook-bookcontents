@@ -86,7 +86,7 @@ As you can see, it defines some attributes to store the window handle, its width
 * `width`: Desired window width:
 * `ups`: Defines the target number of updates per second (initialized to a default value).
 
-Let's examine the constructor of the `Window+  class:
+Let's examine the constructor of the `Window` class:
 
 ```java
 public class Window {
@@ -128,7 +128,7 @@ public class Window {
         glfwSetFramebufferSizeCallback(windowHandle, (window, w, h) -> resized(w, h));
 
         glfwSetErrorCallback((int errorCode, long msgPtr) ->
-                Logger.error("Error code [{}], msg [{]]", errorCode, MemoryUtil.memUTF8(msgPtr))
+                Logger.error("Error code [{}], msg [{}]", errorCode, MemoryUtil.memUTF8(msgPtr))
         );
 
         glfwSetKeyCallback(windowHandle, (window, key, scancode, action, mods) -> {
@@ -309,7 +309,7 @@ public class Engine {
 }
 ```
 
-The `Engine`class, receives in the constructor the title of the window, the window options and a reference to the implementation of the `IAppLogic` interface.  In the constructor it creates instance of the `Window`, `Render` and `Scene` classes. The `cleanup` method just invokes the other classes `cleanup` resources. The game loop is defined in the `run` method which is defined like this:
+The `Engine` class, receives in the constructor the title of the window, the window options and a reference to the implementation of the `IAppLogic` interface.  In the constructor it creates instance of the `Window`, `Render` and `Scene` classes. The `cleanup` method just invokes the other classes `cleanup` resources. The game loop is defined in the `run` method which is defined like this:
 
 ```java
 public class Engine {
