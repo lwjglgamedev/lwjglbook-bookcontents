@@ -1,6 +1,6 @@
 # Chapter 03 - Your first triangle
 
-In this chapter we will render or first triangle to the screen and introduce the basis of a programmable graphics pipeline. But, prior to that, we will explain firs the basis of coordinate systems. trying to introduce some fundamental mathematical concepts in a simple way to support the techniques and topics that we will address in subsequent chapters. We will assume some simplifications which may sacrifice preciseness for the sake of legibility.
+In this chapter we will render or first triangle to the screen and introduce the basis of a programmable graphics pipeline. But, prior to that, we will explain first the basis of coordinate systems. trying to introduce some fundamental mathematical concepts in a simple way to support the techniques and topics that we will address in subsequent chapters. We will assume some simplifications which may sacrifice preciseness for the sake of legibility.
 
 You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-03).
 
@@ -60,7 +60,7 @@ OpenGL 2.0 introduced the concept of programmable pipeline. In this model, the d
 
 ![Programmable pipeline](rendering_pipeline_2.png)
 
-The rendering starts taking as its input a list of vertices in the form of Vertex Buffers. But, what is a vertex? A vertex is any data structure that cam be used as an input to render a scene. By now you can think as a structure that describes a point in 2D or 3D space. And how do you describe a point in a 3D space? By specifying its x, y and z coordinates. And what is a Vertex Buffer? A Vertex Buffer is another data structure that packs all the vertices that need to be rendered, by using vertex arrays, and makes that information available to the shaders in the graphics pipeline.
+The rendering starts taking as its input a list of vertices in the form of Vertex Buffers. But, what is a vertex? A vertex is any data structure that can be used as an input to render a scene. By now you can think as a structure that describes a point in 2D or 3D space. And how do you describe a point in a 3D space? By specifying its x, y and z coordinates. And what is a Vertex Buffer? A Vertex Buffer is another data structure that packs all the vertices that need to be rendered, by using vertex arrays, and makes that information available to the shaders in the graphics pipeline.
 
 Those vertices are processed by the vertex shader whose main purpose is to calculate the projected position of each vertex into the screen space. This shader can generate also other outputs related to color or texture, but its main goal is to project the vertices into the screen space, that is, to generate dots.
 
@@ -217,11 +217,11 @@ public class ShaderProgram {
 }
 ```
 
-The constructor of the `ShaderProgram` receives a list of `ShaderModuleData` instances which define the shader module typ (vertex, fragment, etc.) and the path to the source file which contains the shader module code. The constructor starts by creating a new OpenGL shader program by compiling firs each shader module (by invoking the `createShader` method) and finally linking all together (by invoking the `link` method). Once the shader program has been linked, the compiled vertex and fragment shaders can be freed up \(by calling `glDetachShader`\).
+The constructor of the `ShaderProgram` receives a list of `ShaderModuleData` instances which define the shader module type (vertex, fragment, etc.) and the path to the source file which contains the shader module code. The constructor starts by creating a new OpenGL shader program by compiling firs each shader module (by invoking the `createShader` method) and finally linking all together (by invoking the `link` method). Once the shader program has been linked, the compiled vertex and fragment shaders can be freed up \(by calling `glDetachShader`\).
 
 The `validate` method, basically calls the `glValidateProgram` function. This function is used mainly for debugging purposes, and it should not be used when your game reaches production stage. This method tries to validate if the shader is correct given the **current OpenGL state**. This means, that validation may fail in some cases even if the shader is correct, due to the fact that the current state is not complete enough to run the shader \(some data may have not been uploaded yet\). You should call it when all required input and output data is properly bound (better just before performing any drawing call).
 
-`ShaderProgram` also provides methods to use this program for rendering, that is binding it, another one for unbinding (when we are don with it) and finally, a cleanup method to free all the resources when they are no longer needed.
+`ShaderProgram` also provides methods to use this program for rendering, that is binding it, another one for unbinding (when we are done with it) and finally, a cleanup method to free all the resources when they are no longer needed.
 
 We will create an utility class named `Utils`, which in this case defines a public method to load a file into a `String`:
 
@@ -280,7 +280,7 @@ public class Scene {
 }
 ```
 
-As you can see it just store `Mesh` instances in a Map, which is later on used for drawing. But what is a `Mesh`? It is basically our way to load vertices data into the GPU so it can be used for render. Prior to describe in detail the `Mesh` class, let's see how it cab be used in our `Main` class:
+As you can see it just store `Mesh` instances in a Map, which is later on used for drawing. But what is a `Mesh`? It is basically our way to load vertices data into the GPU so it can be used for render. Prior to describe in detail the `Mesh` class, let's see how it can be used in our `Main` class:
 ```java
 public class Main implements IAppLogic {
 
@@ -469,12 +469,14 @@ public class Render {
     }
 
     public void render(Window window, Scene scene) {
-        sceneRender.render(window, scene);
+        ...
+        glViewport(0, 0, window.getWidth(), window.getHeight());
+        sceneRender.render(scene);
     }
 }
 ```
 
- The `render` method starts by clearing the framebuffer and setting the view port (by calling the `glViewport` method) to the window dimensions. That is, we set the rendering area to those dimensions (This does not need to be done for every frame, but if we want toi support window resizing we can do it this way to adapt to potential changes in each frame). After that we just invoke the `render` method over the`SceneRender` instance. And, that’s all! If you followed the steps carefully you will see something like this:
+ The `render` method starts by clearing the framebuffer and setting the view port (by calling the `glViewport` method) to the window dimensions. That is, we set the rendering area to those dimensions (This does not need to be done for every frame, but if we want toi support window resizing we can do it this way to adapt to potential changes in each frame). After that we just invoke the `render` method over the `SceneRender` instance. And, that’s all! If you followed the steps carefully you will see something like this:
 
 ![Triangle game](triangle_window.png)
 

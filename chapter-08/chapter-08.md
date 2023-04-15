@@ -42,7 +42,7 @@ $$
 
 ## Camera implementation
 
-So let’s start modifying our code to support a camera. First of all we will create a new class called `Camera` which will hold the position and rotation state of our camera as wll as its view matrix. The class is defined like this:
+So let’s start modifying our code to support a camera. First of all we will create a new class called `Camera` which will hold the position and rotation state of our camera as well as its view matrix. The class is defined like this:
 ```java
 package org.lwjglb.engine.scene;
 
@@ -134,9 +134,9 @@ public class Camera {
 }
 ```
 
-As you can see, besides rotation and position we define some vectors to define forward up and right directions. This is because we are implementing a free space movement camera, and whe whe rotate it if we want to move forward we just want to move where the camera is pointing, not to predefined axis. We need to get those vectors to calculate where the next position will be placed. And finally, at the end the state of the camera is stored into a 4x4 matrix, the view matrix, so any time we change position or rotation we need to update it. As you can see, when updating thew view matrix, we first need to do the rotation and then the translation. If we did the opposite we would not be rotating along the camera position but along the coordinates origin. 
+As you can see, besides rotation and position we define some vectors to define forward up and right directions. This is because we are implementing a free space movement camera, and when we rotate it if we want to move forward we just want to move where the camera is pointing, not to predefined axis. We need to get those vectors to calculate where the next position will be placed. And finally, at the end the state of the camera is stored into a 4x4 matrix, the view matrix, so any time we change position or rotation we need to update it. As you can see, when updating thew view matrix, we first need to do the rotation and then the translation. If we did the opposite we would not be rotating along the camera position but along the coordinates origin. 
 
-The `Camera` class also provides methods tup update position when moving forward, up or to the right. In these methods, the view matrix is used to calculate where the forward, up or right methods should be according to current state, and increases the position accordingly. We use the fantastic JOML library to these calculations for us while maintaining the code quite simple.
+The `Camera` class also provides methods to update position when moving forward, up or to the right. In these methods, the view matrix is used to calculate where the forward, up or right methods should be according to current state, and increases the position accordingly. We use the fantastic JOML library to these calculations for us while maintaining the code quite simple.
 
 ## Using the Camera
 

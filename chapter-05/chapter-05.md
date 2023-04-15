@@ -128,7 +128,7 @@ public class Engine {
 
 Now that we have the infrastructure to calculate the perspective projection matrix, how do we use it? We need to use it in our shader, and it should be applied to all the vertices. At first, you could think of bundling it in the vertex input \(like the coordinates and the colors\). In this case we would be wasting lots of space since the projection matrix is common to any vertex. You may also think of multiplying the vertices by the matrix in the java code. But then, our VBOs would be useless and we will not be using the process power available in the graphics card.
 
-The answer is to use “uniforms”. Uniforms are global GLSL variables that shaders can use and that we will employ to pass data that is common to all elements or to a model. So, let's start with how uniforms are use din shader programs. We need to modify our vertex shader code and declare a new uniform called `projectionMatrix` and use it to calculate the projected position.
+The answer is to use “uniforms”. Uniforms are global GLSL variables that shaders can use and that we will employ to pass data that is common to all elements or to a model. So, let's start with how uniforms are used in shader programs. We need to modify our vertex shader code and declare a new uniform called `projectionMatrix` and use it to calculate the projected position.
 
 ```glsl
 #version 330
@@ -181,7 +181,7 @@ public class UniformsMap {
 }
 ```
 
-As you can see, the constructor receives the identifier of the shader program and it defines a `Map` to store the references (`Integer` instances) to uniforms which are create din the `createUniform` method.  Uniforms references are retrieved by calling the `glGetUniformLocation` function, which receives two parameters:
+As you can see, the constructor receives the identifier of the shader program and it defines a `Map` to store the references (`Integer` instances) to uniforms which are created in the `createUniform` method.  Uniforms references are retrieved by calling the `glGetUniformLocation` function, which receives two parameters:
 
 * The shader program identifier.
 * The name of the uniform \(it should match the one defined in the shader code\).
