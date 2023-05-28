@@ -669,9 +669,7 @@ public class AnimationData {
 
     static {
         Matrix4f zeroMatrix = new Matrix4f().zero();
-        for (int i = 0; i < DEFAULT_BONES_MATRICES.length; i++) {
-            DEFAULT_BONES_MATRICES[i] = zeroMatrix;
-        }
+        Arrays.fill(DEFAULT_BONES_MATRICES, zeroMatrix);
     }
 
     private Model.Animation currentAnimation;
