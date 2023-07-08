@@ -150,7 +150,7 @@ public class TextureCache {
     }
 
     public void cleanup() {
-        textureMap.values().stream().forEach(Texture::cleanup);
+        textureMap.values().forEach(Texture::cleanup);
     }
 
     public Texture createTexture(String texturePath) {
@@ -206,7 +206,7 @@ public class Material {
     }
 
     public void cleanup() {
-        meshList.stream().forEach(Mesh::cleanup);
+        meshList.forEach(Mesh::cleanup);
     }
 
     public List<Mesh> getMeshList() {
@@ -244,7 +244,7 @@ public class Model {
     }
 
     public void cleanup() {
-        materialList.stream().forEach(Material::cleanup);
+        materialList.forEach(Material::cleanup);
     }
 
     public List<Entity> getEntitiesList() {

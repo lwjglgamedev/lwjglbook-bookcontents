@@ -526,8 +526,10 @@ public class SceneRender {
         ...
         // Animated meshes
         drawElement = 0;
-        modelList = scene.getModelMap().values().stream().filter(m -> m.isAnimated()).toList();
-        for (Model model : modelList) {
+        for (Model model: scene.getModelMap().values()) {
+            if (!model.isAnimated()) {
+                continue;
+            }
             for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
                 RenderBuffers.AnimMeshDrawData animMeshDrawData = meshDrawData.animMeshDrawData();
                 Entity entity = animMeshDrawData.entity();
@@ -608,10 +610,12 @@ public class ShadowRender {
     ...
     public void render(Scene scene, RenderBuffers renderBuffers) {
         ...
-        // Anim meshes
+        // Animated meshes
         drawElement = 0;
-        modelList = scene.getModelMap().values().stream().filter(m -> m.isAnimated()).toList();
-        for (Model model : modelList) {
+        for (Model model: scene.getModelMap().values()) {
+            if (!model.isAnimated()) {
+                continue;
+            }
             for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
                 RenderBuffers.AnimMeshDrawData animMeshDrawData = meshDrawData.animMeshDrawData();
                 Entity entity = animMeshDrawData.entity();

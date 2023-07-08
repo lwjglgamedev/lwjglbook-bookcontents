@@ -30,7 +30,7 @@ public class Model {
     }
 
     public void cleanup() {
-        meshList.stream().forEach(Mesh::cleanup);
+        meshList.forEach(Mesh::cleanup);
     }
 
     public List<Entity> getEntitiesList() {
@@ -222,7 +222,7 @@ public class Scene {
     }
 
     public void cleanup() {
-        modelMap.values().stream().forEach(Model::cleanup);
+        modelMap.values().forEach(Model::cleanup);
     }
 
     public Map<String, Model> getModelMap() {

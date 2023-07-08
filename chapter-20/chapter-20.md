@@ -760,8 +760,10 @@ public class SceneRender {
 
         // Static meshes
         int drawElement = 0;
-        List<Model> modelList = scene.getModelMap().values().stream().filter(m -> !m.isAnimated()).toList();
-        for (Model model : modelList) {
+        for (Model model: scene.getModelMap().values()) {
+            if (model.isAnimated()) {
+                continue;
+            }
             List<Entity> entities = model.getEntitiesList();
             for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
                 for (Entity entity : entities) {
@@ -1023,8 +1025,10 @@ public class ShadowRender {
 
         // Static meshes
         int drawElement = 0;
-        List<Model> modelList = scene.getModelMap().values().stream().filter(m -> !m.isAnimated()).toList();
-        for (Model model : modelList) {
+        for (Model model: scene.getModelMap().values()) {
+            if (model.isAnimated()) {
+                continue;
+            }
             List<Entity> entities = model.getEntitiesList();
             for (RenderBuffers.MeshDrawData meshDrawData : model.getMeshDrawDataList()) {
                 for (Entity entity : entities) {
