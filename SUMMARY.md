@@ -18,6 +18,7 @@
 * [Chapter 15 - Animations](chapter-15/chapter-15.md)
 * [Chapter 16 - Audio](chapter-16/chapter-16.md)
 * [Chapter 17 - Cascade shadow maps](chapter-17/chapter-17.md)
+* [Chapter 18 - 3D Object Picking](chapter-18/chapter-18.md)
 * [Chapter 19 - Deferred Shading](chapter-19/chapter-19.md)
 * [Chapter 20 - Indirect drawing (static models)](chapter-20/chapter-20.md)
 * [Chapter 21 - Indirect drawing (animated models) and compute shaders](chapter-21/chapter-21.md)
