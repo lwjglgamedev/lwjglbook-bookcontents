@@ -4,7 +4,9 @@ In this book we will learn the principal techniques involved in developing 3D ga
 
 LWJGL is a low level API that acts like a wrapper around OpenGL. Therefore, if your idea is to start creating 3D games in a short period of time maybe you should consider other alternatives like [jMonkeyEngine](https://jmonkeyengine.org) or [Unity](https::/unity.com). By using this low level API you will have to go through many concepts and write lots of lines of code before you see the results. The benefit of doing it this way is that you will get a much better understanding of 3D graphics and you will always have the control.
 
-Regarding Java, you will need at least Java 17. So the first step, in case you do not have that version installed, is to download the Java SDK. You can download the OpenJDK binaries [here](https://jdk.java.net/17/), or you can download them from [Adoptium](https://adoptium.net/temurin/archive?version=17), which has an installer on Windows and macOS. When downloading the Adoptium build, make sure to download the "JDK" and not the "JRE." Just choose the installer that suits your Operating System and install it. In any case, this book assumes that you have a moderate understanding of the Java language. If this is not your case, you should first get proper knowledge of the language.
+Regarding Java, you will need at least Java 17. So the first step, in case you do not have that version installed, is to download the Java SDK. You can download the OpenJDK binaries [here](https://jdk.java.net/17/). In any case, this book assumes that you have a moderate understanding of the Java language. If this is not your case, you should first get proper knowledge of the language.
+
+The best way to work with the examples is to clone the Github repository. You can either download the whole repository as a zip and extract in in your desired folder or clone it by using the following command: `git clone https://github.com/lwjglgamedev/lwjglbook.git`. In bot cases you will have a root folder which contains one sub folder per chapter.
 
 You may use the Java IDE you want in order to run the samples. You can download IntelliJ IDEA which has good support for Java. IntelliJ provides a free open source version, the Community version, which you can download from here: [https://www.jetbrains.com/idea/download/](https://www.jetbrains.com/idea/download/ "IntelliJ").
 
@@ -13,12 +15,11 @@ You may use the Java IDE you want in order to run the samples. You can download 
 When you open the source code in your IDE you can either open the root folder which contains all the chapters (the parent project) or each chapter independently. In the first case, please remember to properly set the working directory for each chapter to the root folder of the chapter. The samples will try to access files using relative paths assuming that the root folder is the chapter base folder.
 
 For building our samples we will be using [Maven](https://maven.apache.org/). Maven is already integrated in most IDEs and you can directly open the different samples inside them. Just open the folder that contains the chapter sample and IntelliJ will detect that it is a maven project.
-
 ![Maven](maven_project.png)
 
 Maven builds projects based on an XML file named `pom.xml` \(Project Object Model\) which manages project dependencies \(the libraries you need to use\) and the steps to be performed during the build process. Maven follows the principle of convention over configuration, that is, if you stick to the standard project structure and naming conventions the configuration file does not need to explicitly say where source files are or where compiled classes should be located.
 
-This book does not intend to be a maven tutorial, so please find the information about it in the web in case you need it.  The source code folder defines a parent project which defines the plugins to be used and collects the versions of the libraries employed.
+This book does not intend to be a maven tutorial, so please find the information about it in the web in case you need it. The source code root folder defines a parent project which defines the plugins to be used and collects the versions of the libraries employed. Therefore you will find there a `pom.xml` file which defines common actions and properties for all the chapters, which are handled as sub-projects.
 
 LWJGL 3.1 introduced some changes in the way that the project is built. Now the base code is much more modular, and we can be more selective in the packages that we want to use instead of using a giant monolithic jar file. This comes at a cost: You now need to carefully specify the dependencies one by one. But the [download](https://www.lwjgl.org/download) page includes a fancy tool that generates the pom file for you. In our case, we will be first using GLFW and OpenGL bindings. You can check what the pom file looks like in the source code.
 
