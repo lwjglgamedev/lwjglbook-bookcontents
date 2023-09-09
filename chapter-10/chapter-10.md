@@ -132,6 +132,7 @@ import static org.lwjgl.opengl.GL32.*;
 public class GuiRender {
 
     private GuiMesh guiMesh;
+    private GLFWKeyCallback prevKeyCallBack;
     private Vector2f scale;
     private ShaderProgram shaderProgram;
     private Texture texture;
@@ -150,12 +151,15 @@ public class GuiRender {
     public void cleanup() {
         shaderProgram.cleanup();
         texture.cleanup();
+        if (prevKeyCallBack != null) {
+            prevKeyCallBack.free();
+        }
     }
     ...
 }
 ```
 
-As you can see, most of the stuff here will be very familiar to you, we just set up the shaders and the uniforms. However, there is a new method called `createUIResources` which is defined like this:
+As you can see, most of the stuff here will be very familiar to you, we just set up the shaders and the uniforms. Since we will need to set up a custom key callback to handle ImGui input text controls, we need to keep track of a previous key callback in `prevKeyCallBack` to properly use it and free it. In addition to that, there is a new method called `createUIResources` which is defined like this:
 
 ```java
 public class GuiRender {
@@ -197,8 +201,6 @@ public class GuiRender {
 
 The `setupKeyCallBack` method is required to properly process key events in Imgui and is defined like this:
 ```java
-public class GuiRender {
-    ...
     private void setupKeyCallBack(Window window) {
         ImGuiIO io = ImGui.getIO();
         io.setKeyMap(ImGuiKey.Tab, GLFW_KEY_TAB);
@@ -218,9 +220,12 @@ public class GuiRender {
         io.setKeyMap(ImGuiKey.Escape, GLFW_KEY_ESCAPE);
         io.setKeyMap(ImGuiKey.KeyPadEnter, GLFW_KEY_KP_ENTER);
 
-        glfwSetKeyCallback(window.getWindowHandle(), (handle, key, scancode, action, mods) -> {
+        prevKeyCallBack = glfwSetKeyCallback(window.getWindowHandle(), (handle, key, scancode, action, mods) -> {
                     window.keyCallBack(key, action);
                     if (!io.getWantCaptureKeyboard()) {
+                        if (prevKeyCallBack != null) {
+                            prevKeyCallBack.invoke(handle, key, scancode, action, mods);
+                        }
                         return;
                     }
                     if (action == GLFW_PRESS) {
@@ -245,7 +250,7 @@ public class GuiRender {
     ...
 }
 ```
-First we need to setup Imgui key map which translates some GLFW key codes to the ones used by Imgui to properly handle special key events for some components (such as key widgets, etc.). After that we need to setup a GLFW key callback which first calls `Window` key call back to handle exit key events to close the window. After that, we set up the state of Imgui according to key pressed or released events. Finally, we need to setup a char call back so text input widgets can process those events.
+First we need to setup Imgui key map which translates some GLFW key codes to the ones used by Imgui to properly handle special key events for some components (such as key widgets, etc.). After that we need to setup a GLFW key callback which first calls `Window` key call back to handle exit key events to close the window. When setting a callback we obtain a reference to a previously established one so we can chain them. In this case we will invoke it if the key event is not handled by ImGui. We are not using char callbacks in other parts of the code, but if you do, remember to apply that chain schema also. After that, we set up the state of Imgui according to key pressed or released events. Finally, we need to setup a char call back so text input widgets can process those events.
 
 Let's view the `render` method now:
 

@@ -340,13 +340,13 @@ public class Mesh {
             FloatBuffer bitangentsBuffer = stack.callocFloat(meshData.getBitangents().length);
             bitangentsBuffer.put(0, meshData.getBitangents());
             ...
-            FloatBuffer textCoordsBuffer = MemoryUtil.memAllocFloat(meshData.getTextCoords().length);
+            FloatBuffer textCoordsBuffer = stack.callocFloat(meshData.getTextCoords().length);
             textCoordsBuffer.put(0, meshData.getTextCoords());
             ...
-            FloatBuffer weightsBuffer = MemoryUtil.memAllocFloat(meshData.getWeights().length);
+            FloatBuffer weightsBuffer = stack.callocFloat(meshData.getWeights().length);
             weightsBuffer.put(meshData.getWeights()).flip();
             ...
-            IntBuffer boneIndicesBuffer = MemoryUtil.memAllocInt(meshData.getBoneIndices().length);
+            IntBuffer boneIndicesBuffer = stack.callocInt(meshData.getBoneIndices().length);
             boneIndicesBuffer.put(meshData.getBoneIndices()).flip();
             ...
             IntBuffer indicesBuffer = stack.callocInt(meshData.getIndices().length);

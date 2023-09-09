@@ -529,7 +529,7 @@ public class Mesh {
             // Bone weights
             vboId = glGenBuffers();
             vboIdList.add(vboId);
-            FloatBuffer weightsBuffer = MemoryUtil.memAllocFloat(weights.length);
+            FloatBuffer weightsBuffer = stack.callocFloat(weights.length);
             weightsBuffer.put(weights).flip();
             glBindBuffer(GL_ARRAY_BUFFER, vboId);
             glBufferData(GL_ARRAY_BUFFER, weightsBuffer, GL_STATIC_DRAW);
@@ -539,7 +539,7 @@ public class Mesh {
             // Bone indices
             vboId = glGenBuffers();
             vboIdList.add(vboId);
-            IntBuffer boneIndicesBuffer = MemoryUtil.memAllocInt(boneIndices.length);
+            IntBuffer boneIndicesBuffer = stack.callocInt(boneIndices.length);
             boneIndicesBuffer.put(boneIndices).flip();
             glBindBuffer(GL_ARRAY_BUFFER, vboId);
             glBufferData(GL_ARRAY_BUFFER, boneIndicesBuffer, GL_STATIC_DRAW);
@@ -552,7 +552,7 @@ public class Mesh {
 }
 ```
 
-The `Node` class just stores the data associated to an `AINode` an has specific methods to manage its childs:
+The `Node` class just stores the data associated to an `AINode` an has specific methods to manage its children:
 
 ```java
 package org.lwjglb.engine.scene;
