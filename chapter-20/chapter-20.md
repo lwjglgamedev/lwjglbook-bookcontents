@@ -558,7 +558,7 @@ out vec3 outBitangent;
 out vec2 outTextCoord;
 out vec4 outViewPosition;
 out vec4 outWorldPosition;
-out uint outMaterialIdx;
+flat out uint outMaterialIdx;
 
 struct DrawElement
 {
