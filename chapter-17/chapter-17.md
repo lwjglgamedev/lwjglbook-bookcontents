@@ -543,7 +543,7 @@ public class SceneRender {
     private void createUniforms() {
         ...
         for (int i = 0; i < CascadeShadow.SHADOW_MAP_CASCADE_COUNT; i++) {
-            uniformsMap.createUniform("shadowMap_" + i);
+            uniformsMap.createUniform("shadowMap[" + i + "]");
             uniformsMap.createUniform("cascadeshadows[" + i + "]" + ".projViewMatrix");
             uniformsMap.createUniform("cascadeshadows[" + i + "]" + ".splitDistance");
         }
@@ -552,7 +552,7 @@ public class SceneRender {
 }
 ```
 
-In the `render` method of the `SceneRender` class we just need to populate those uniforms prior to tendre the models:
+In the `render` method of the `SceneRender` class we just need to populate those uniforms prior to render the models:
 
 ```java
 public class SceneRender {
@@ -565,7 +565,7 @@ public class SceneRender {
         int start = 2;
         List<CascadeShadow> cascadeShadows = shadowRender.getCascadeShadows();
         for (int i = 0; i < CascadeShadow.SHADOW_MAP_CASCADE_COUNT; i++) {
-            uniformsMap.setUniform("shadowMap_" + i, start + i);
+            uniformsMap.setUniform("shadowMap[" + i + "]", start + i);
             CascadeShadow cascadeShadow = cascadeShadows.get(i);
             uniformsMap.setUniform("cascadeshadows[" + i + "]" + ".projViewMatrix", cascadeShadow.getProjViewMatrix());
             uniformsMap.setUniform("cascadeshadows[" + i + "]" + ".splitDistance", cascadeShadow.getSplitDistance());
@@ -619,7 +619,7 @@ We first define a set of constants:
 - `SHADOW_FACTOR`: The darkening factor that fill be applied to a fragment when in shadow.
 - `BIAS`: The depth bias to apply when estimating if a fragment is affected by a shadow or not. This is used to reduce shadow artifacts, such as shadow acne.TShadow acne is produced by the limited resolution of the texture that stores the depth map which will produce strange artifacts.  We will solve this problem by setting a threshold that will reduce precision problems.
 
-After that, wee define the new uniforms which store cascade splits and the textures of the shadow maps. We will need also to pass to the shader the inverse view matrix. In previous chapter, we used the inverse of the projection matrix to get the fragment position in view coordinates. In this case, we need to go a step beyond and get the fragment position also in world coordinates, if we multiply the inverse view matrix by the fragment position in view coordinates we will get the world coordinates. In addition to that, we need the projection view matrices of the cascade splits as well as their split distances:
+After that, wee define the new uniforms which store cascade splits and the textures of the shadow maps. We will need also to pass to the shader the inverse view matrix. In previous chapter, we used the inverse of the projection matrix to get the fragment position in view coordinates. In this case, we need to go a step beyond and get the fragment position also in world coordinates, if we multiply the inverse view matrix by the fragment position in view coordinates we will get the world coordinates. In addition to that, we need the projection view matrices of the cascade splits as well as their split distances. We also need an array of uniforms with the cascade information and array of samplers to access, as an array of textures, the results of the shadow render process. Instead of an array of sampler you could use a `sampler2DArray` (with an array of samplers, such as the one used here,  you could make each shadow map cascade texture to have a different size. So it offers a little bit more of flexibility, although we are not exploiting that here)
 
 ```glsl
 ...
@@ -629,9 +629,7 @@ struct CascadeShadow {
 };
 ...
 uniform CascadeShadow cascadeshadows[NUM_CASCADES];
-uniform sampler2D shadowMap_0;
-uniform sampler2D shadowMap_1;
-uniform sampler2D shadowMap_2;
+uniform sampler2D shadowMap[NUM_CASCADES];
 ...
 ```
 
@@ -658,13 +656,7 @@ float textureProj(vec4 shadowCoord, vec2 offset, int idx) {
 
     if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0) {
         float dist = 0.0;
-        if (idx == 0) {
-            dist = texture(shadowMap_0, vec2(shadowCoord.xy + offset)).r;
-        } else if (idx == 1) {
-            dist = texture(shadowMap_1, vec2(shadowCoord.xy + offset)).r;
-        } else {
-            dist = texture(shadowMap_2, vec2(shadowCoord.xy + offset)).r;
-        }
+        dist = texture(shadowMap[idx], vec2(shadowCoord.xy + offset)).r;
         if (shadowCoord.w > 0 && dist < shadowCoord.z - BIAS) {
             shadow = SHADOW_FACTOR;
         }
