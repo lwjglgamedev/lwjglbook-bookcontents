@@ -78,7 +78,7 @@ Besides that, every project generates a runnable jar \(one that can be executed 
 
 The jars that contain LWJGL classes, also contain the native libraries. LWJGL will also take care of extracting them and adding them to the path where the JVM will look for libraries.
 
-This chapter's source code is taken directly from the getting started sample in the LWJGL site [http://www.lwjgl.org/guide](http://www.lwjgl.org/guide). Although it is very well documented let's go through the source code and explain the most relevant parts. Since pasting the source code for each class will make it impossible to read, we will include fragments. In order for you to better understand the class to which each specific fragment belongs, we will always include the class header in each fragment. We will use thre dots (`...`) to indicate that there is more code before / after the fragment. The sample is contained in a single class named `HelloWorld` which starts like this:
+This chapter's source code is taken directly from the getting started sample in the LWJGL site [http://www.lwjgl.org/guide](http://www.lwjgl.org/guide). Although it is very well documented let's go through the source code and explain the most relevant parts. Since pasting the source code for each class will make it impossible to read, we will include fragments. In order for you to better understand the class to which each specific fragment belongs, we will always include the class header in each fragment. We will use three dots (`...`) to indicate that there is more code before / after the fragment. The sample is contained in a single class named `HelloWorld` which starts like this:
 ```java
 package org.lwjglb;
 
@@ -107,7 +107,7 @@ public class HelloWorld {
 }
 ```
 
-The class just stores a reference to a Window handle (we will see what this means later on), an in the `main` method we just call the `run` method. Let's start disecting that method:
+The class just stores a reference to a Window handle (we will see what this means later on), an in the `main` method we just call the `run` method. Let's start dissecting that method:
 ```java
 public class HelloWorld {
     ...
@@ -200,9 +200,9 @@ public class HelloWorld {
 }
 ```
 
-Although we will explain it in next chapters, you will see here a key class in LWJGL which is the `MemoryStack`. As it has been said before, LJWGL provides wrappers around native libraries (C-based functions). Java does not have the concept of pointers (at least tyhinking in C terms), so passing strauctures to C functions is not a straight forward task. In order to share those structures, and to have pass by reference parameters, such as in the example above, we need to allocate memory which can be accessed by native code. LWJGL provides the `MemoryStack` class which allows us to allocate native-accesible memory / structures which is automatically cleaned (in fact is returned to a pool like strcuture so it can be reused) when we are out of the scope where `stackPush` method is called. Every native-accesible memory / structure is instatiated through this stack class. In the sample above we need to call the `glfwGetWindowSize` to get window dimensions. The values are returned using a pass-by-reference approach, so meed to allocate two ints (in the form of two `IntBuffer`'s). With that information and the dimensions of the monitor we can center the window, setup OpenGL, enable v-sync (more on this in next chapter) and finally show the window.
+Although we will explain it in next chapters, you will see here a key class in LWJGL which is the `MemoryStack`. As it has been said before, LJWGL provides wrappers around native libraries (C-based functions). Java does not have the concept of pointers (at least thinking in C terms), so passing structures to C functions is not a straight forward task. In order to share those structures, and to have pass by reference parameters, such as in the example above, we need to allocate memory which can be accessed by native code. LWJGL provides the `MemoryStack` class which allows us to allocate native-accessible memory / structures which is automatically cleaned (in fact is returned to a pool like structure so it can be reused) when we are out of the scope where `stackPush` method is called. Every native-accessible memory / structure is instantiated through this stack class. In the sample above we need to call the `glfwGetWindowSize` to get window dimensions. The values are returned using a pass-by-reference approach, so meed to allocate two ints (in the form of two `IntBuffer`'s). With that information and the dimensions of the monitor we can center the window, setup OpenGL, enable v-sync (more on this in next chapter) and finally show the window.
 
-Now we neeed an endless loop to render continously something:
+Now we need an endless loop to render continuously something:
 ```java
 public class HelloWorld {
     ...
