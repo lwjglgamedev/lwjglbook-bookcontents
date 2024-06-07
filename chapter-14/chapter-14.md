@@ -334,6 +334,16 @@ public class SceneRender {
 }
 ```
 
+We need to update the sky box vertex shader because we have new vectors between normal data and texture coordinate:
+```glsl
+#version 330
+
+layout (location=0) in vec3 position;
+layout (location=1) in vec3 normal;
+layout (location=4) in vec2 texCoord;
+...
+```
+
 The last step is to update the `Main` class to show this effect. We will load two quads with and without normal maps associated to them. Also we will use left and right arrows to control light angle to show the effect.
 
 ```java
