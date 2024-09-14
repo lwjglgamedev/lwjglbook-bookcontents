@@ -35,8 +35,7 @@ The source code for the book is licensed under [Apache v2.0](https://www.apache.
 
 ## Support
 
-If you like the book please rate it with a start and share it. If you want to contribute with a donation you can do a donation:  
-[![Paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=5MH9AA9TPQQBN)
+If you like the book you can become a [sponsor](https://github.com/sponsors/lwjglgamedev)
 
 ## Comments are welcome
 
