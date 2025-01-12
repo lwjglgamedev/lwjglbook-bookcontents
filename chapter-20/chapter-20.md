@@ -323,35 +323,33 @@ Changes in the `Mesh` class are due to the fact we introduced the `MeshData` cla
 public class Mesh {
     ...
     public Mesh(MeshData meshData) {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            this.aabbMin = meshData.getAabbMin();
-            this.aabbMax = meshData.getAabbMax();
-            numVertices = meshData.getIndices().length;
-            ...
-            FloatBuffer positionsBuffer = stack.callocFloat(meshData.getPositions().length);
-            positionsBuffer.put(0, meshData.getPositions());
-            ...
-            FloatBuffer normalsBuffer = stack.callocFloat(meshData.getNormals().length);
-            normalsBuffer.put(0, meshData.getNormals());
-            ...
-            FloatBuffer tangentsBuffer = stack.callocFloat(meshData.getTangents().length);
-            tangentsBuffer.put(0, meshData.getTangents());
-            ...
-            FloatBuffer bitangentsBuffer = stack.callocFloat(meshData.getBitangents().length);
-            bitangentsBuffer.put(0, meshData.getBitangents());
-            ...
-            FloatBuffer textCoordsBuffer = stack.callocFloat(meshData.getTextCoords().length);
-            textCoordsBuffer.put(0, meshData.getTextCoords());
-            ...
-            FloatBuffer weightsBuffer = stack.callocFloat(meshData.getWeights().length);
-            weightsBuffer.put(meshData.getWeights()).flip();
-            ...
-            IntBuffer boneIndicesBuffer = stack.callocInt(meshData.getBoneIndices().length);
-            boneIndicesBuffer.put(meshData.getBoneIndices()).flip();
-            ...
-            IntBuffer indicesBuffer = stack.callocInt(meshData.getIndices().length);
-            indicesBuffer.put(0, meshData.getIndices());
-        }
+        this.aabbMin = meshData.getAabbMin();
+        this.aabbMax = meshData.getAabbMax();
+        numVertices = meshData.getIndices().length;
+        ...
+        FloatBuffer positionsBuffer = MemoryUtil.memCallocFloat(meshData.getPositions().length);
+        positionsBuffer.put(0, meshData.getPositions());
+        ...
+        FloatBuffer normalsBuffer = MemoryUtil.memCallocFloat(meshData.getNormals().length);
+        normalsBuffer.put(0, meshData.getNormals());
+        ...
+        FloatBuffer tangentsBuffer = MemoryUtil.memCallocFloat(meshData.getTangents().length);
+        tangentsBuffer.put(0, meshData.getTangents());
+        ...
+        FloatBuffer bitangentsBuffer = MemoryUtil.memCallocFloat(meshData.getBitangents().length);
+        bitangentsBuffer.put(0, meshData.getBitangents());
+        ...
+        FloatBuffer textCoordsBuffer = MemoryUtil.memCallocFloat(meshData.getTextCoords().length);
+        textCoordsBuffer.put(0, meshData.getTextCoords());
+        ...
+        FloatBuffer weightsBuffer = MemoryUtil.memCallocFloat(meshData.getWeights().length);
+        weightsBuffer.put(meshData.getWeights()).flip();
+        ...
+        IntBuffer boneIndicesBuffer = MemoryUtil.memCallocInt(meshData.getBoneIndices().length);
+        boneIndicesBuffer.put(meshData.getBoneIndices()).flip();
+        ...
+        IntBuffer indicesBuffer = MemoryUtil.memCallocInt(meshData.getIndices().length);
+        indicesBuffer.put(0, meshData.getIndices());
     }
     ...
 }
@@ -833,8 +831,7 @@ public class SceneRender {
 }
 ```
 
-We first calculate the total number of meshes. After that, we will create the buffer that wil hold indirect drawing instructions and populate it. As you can see we first allocate a `ByteBuffer`. This buffer will hold as many instruction sets as meshes. Each set of draw instructions si composed by five attributes, each of them with a length of 4 bytes (total length of each set of parameters is what defines the `COMMAND_SIZE` constant). We cannot allocate this buffer using `MemoryStack` since we will run out of space quickly (the stack that LWJGL uses for this is limited in size). Therefore, we need to allocate it using `MemoryUtil` and remember to manually de-allocate that once we are done. Once we have the buffer we start iterating over the meshes associated to the model. You may have a look at the beginning of this chapter to check
- the struct that draw indirect requires. In addition to that, we also populate the `drawElements` uniform using the `Map` we calculated previously, to properly get the model matrix index for each entity. Finally, we just create a GPU buffer and dump the data into it.
+We first calculate the total number of meshes. After that, we will create the buffer that wil hold indirect drawing instructions and populate it. As you can see we first allocate a `ByteBuffer`. This buffer will hold as many instruction sets as meshes. Each set of draw instructions si composed by five attributes, each of them with a length of 4 bytes (total length of each set of parameters is what defines the `COMMAND_SIZE` constant). Once we have the buffer we start iterating over the meshes associated to the model. You may have a look at the beginning of this chapter to check the struct that draw indirect requires. In addition to that, we also populate the `drawElements` uniform using the `Map` we calculated previously, to properly get the model matrix index for each entity. Finally, we just create a GPU buffer and dump the data into it.
 
 We will need to update the `cleanup` method to free the indirect drawing buffer:
 

@@ -646,23 +646,24 @@ public class Mesh {
     ...
     public Mesh(float[] positions, float[] normals, float[] textCoords, int[] indices) {
         ...
-            // Normals VBO
-            vboId = glGenBuffers();
-            vboIdList.add(vboId);
-            FloatBuffer normalsBuffer = stack.callocFloat(normals.length);
-            normalsBuffer.put(0, normals);
-            glBindBuffer(GL_ARRAY_BUFFER, vboId);
-            glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
-            glEnableVertexAttribArray(1);
-            glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+        // Normals VBO
+        vboId = glGenBuffers();
+        vboIdList.add(vboId);
+        FloatBuffer normalsBuffer = MemoryUtil.memCallocFloat(normals.length);
+        normalsBuffer.put(0, normals);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
 
-            // Texture coordinates VBO
-            ...
-            glEnableVertexAttribArray(2);
-            glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
+        // Texture coordinates VBO
+        ...
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
 
-            // Index VBO
-            ...
+        // Index VBO
+        ...
+        MemoryUtil.memFree(normalsBuffer);
         ...
     }
     ...

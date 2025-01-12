@@ -524,29 +524,30 @@ public class Mesh {
 
     public Mesh(float[] positions, float[] normals, float[] tangents, float[] bitangents, float[] textCoords, int[] indices,
                 int[] boneIndices, float[] weights) {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            ...
-            // Bone weights
-            vboId = glGenBuffers();
-            vboIdList.add(vboId);
-            FloatBuffer weightsBuffer = stack.callocFloat(weights.length);
-            weightsBuffer.put(weights).flip();
-            glBindBuffer(GL_ARRAY_BUFFER, vboId);
-            glBufferData(GL_ARRAY_BUFFER, weightsBuffer, GL_STATIC_DRAW);
-            glEnableVertexAttribArray(5);
-            glVertexAttribPointer(5, 4, GL_FLOAT, false, 0, 0);
+        ...
+        // Bone weights
+        vboId = glGenBuffers();
+        vboIdList.add(vboId);
+        FloatBuffer weightsBuffer = MemoryUtil.memCallocFloat(weights.length);
+        weightsBuffer.put(weights).flip();
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        glBufferData(GL_ARRAY_BUFFER, weightsBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(5);
+        glVertexAttribPointer(5, 4, GL_FLOAT, false, 0, 0);
 
-            // Bone indices
-            vboId = glGenBuffers();
-            vboIdList.add(vboId);
-            IntBuffer boneIndicesBuffer = stack.callocInt(boneIndices.length);
-            boneIndicesBuffer.put(boneIndices).flip();
-            glBindBuffer(GL_ARRAY_BUFFER, vboId);
-            glBufferData(GL_ARRAY_BUFFER, boneIndicesBuffer, GL_STATIC_DRAW);
-            glEnableVertexAttribArray(6);
-            glVertexAttribPointer(6, 4, GL_FLOAT, false, 0, 0);
-            ...
-        }
+        // Bone indices
+        vboId = glGenBuffers();
+        vboIdList.add(vboId);
+        IntBuffer boneIndicesBuffer = MemoryUtil.memCallocInt(boneIndices.length);
+        boneIndicesBuffer.put(boneIndices).flip();
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        glBufferData(GL_ARRAY_BUFFER, boneIndicesBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, false, 0, 0);
+        ...
+        MemoryUtil.memFree(weightsBuffer);
+        MemoryUtil.memFree(boneIndicesBuffer);
+        ...
     }
     ...
 }

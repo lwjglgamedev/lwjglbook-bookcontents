@@ -327,26 +327,26 @@ public class Mesh {
     private List<Integer> vboIdList;
 
     public Mesh(float[] positions, int numVertices) {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            this.numVertices = numVertices;
-            vboIdList = new ArrayList<>();
+        this.numVertices = numVertices;
+        vboIdList = new ArrayList<>();
 
-            vaoId = glGenVertexArrays();
-            glBindVertexArray(vaoId);
+        vaoId = glGenVertexArrays();
+        glBindVertexArray(vaoId);
 
-            // Positions VBO
-            int vboId = glGenBuffers();
-            vboIdList.add(vboId);
-            FloatBuffer positionsBuffer = stack.callocFloat(positions.length);
-            positionsBuffer.put(0, positions);
-            glBindBuffer(GL_ARRAY_BUFFER, vboId);
-            glBufferData(GL_ARRAY_BUFFER, positionsBuffer, GL_STATIC_DRAW);
-            glEnableVertexAttribArray(0);
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        // Positions VBO
+        int vboId = glGenBuffers();
+        vboIdList.add(vboId);
+        FloatBuffer positionsBuffer = MemoryUtil.memCallocFloat(positions.length);
+        positionsBuffer.put(0, positions);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        glBufferData(GL_ARRAY_BUFFER, positionsBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
 
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindVertexArray(0);
-        }
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+
+        MemoryUtil.memFree(positionsBuffer);
     }
 
     public void cleanup() {
@@ -381,7 +381,9 @@ If you come from previous versions of LWJGL it's important to stress out a few t
 
 You can consult the details here:  [https://blog.lwjgl.org/memory-management-in-lwjgl-3/](https://blog.lwjgl.org/memory-management-in-lwjgl-3/ "here").
 
-After that, we bind the VBO (by calling the `glBindBuffer`) and load the data int ut (by calling the `glBufferData` function). Now comes the most important part. We need to define the structure of our data and store it in one of the attribute lists of the VAO. This is done with the following line.
+In this specific case, positions data is short lived, once we have loaded the data, we are done with that buffer. You may think, we then you do not use the `org.lwjgl.system.MemoryStack` class? The reason to use the second approach (`MemoryUtil` class) is that LWJGL's stack is limited. If you end up loading large modes you may consume all the available space and get and "Out of stack space" exception. The drawback for this approach is that we need to manually free the memory once we are done with it by calling `MemoryUtil.memFree`.
+
+After that, we bind the VBO (by calling the `glBindBuffer`) and load the data int it (by calling the `glBufferData` function). Now comes the most important part. We need to define the structure of our data and store it in one of the attribute lists of the VAO. This is done with the following line.
 
 ```java
 glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);

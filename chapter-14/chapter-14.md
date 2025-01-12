@@ -132,34 +132,35 @@ As you can see, we need to modify also `Mesh` and `Material` classes to hold the
 public class Mesh {
     ...
     public Mesh(float[] positions, float[] normals, float[] tangents, float[] bitangents, float[] textCoords, int[] indices) {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            ...
-            // Tangents VBO
-            vboId = glGenBuffers();
-            vboIdList.add(vboId);
-            FloatBuffer tangentsBuffer = stack.callocFloat(tangents.length);
-            tangentsBuffer.put(0, tangents);
-            glBindBuffer(GL_ARRAY_BUFFER, vboId);
-            glBufferData(GL_ARRAY_BUFFER, tangentsBuffer, GL_STATIC_DRAW);
-            glEnableVertexAttribArray(2);
-            glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
+        ...
+        // Tangents VBO
+        vboId = glGenBuffers();
+        vboIdList.add(vboId);
+        FloatBuffer tangentsBuffer = MemoryUtil.memCallocFloat(tangents.length);
+        tangentsBuffer.put(0, tangents);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        glBufferData(GL_ARRAY_BUFFER, tangentsBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
 
-            // Bitangents VBO
-            vboId = glGenBuffers();
-            vboIdList.add(vboId);
-            FloatBuffer bitangentsBuffer = stack.callocFloat(bitangents.length);
-            bitangentsBuffer.put(0, bitangents);
-            glBindBuffer(GL_ARRAY_BUFFER, vboId);
-            glBufferData(GL_ARRAY_BUFFER, bitangentsBuffer, GL_STATIC_DRAW);
-            glEnableVertexAttribArray(3);
-            glVertexAttribPointer(3, 3, GL_FLOAT, false, 0, 0);
+        // Bitangents VBO
+        vboId = glGenBuffers();
+        vboIdList.add(vboId);
+        FloatBuffer bitangentsBuffer = MemoryUtil.memCallocFloat(bitangents.length);
+        bitangentsBuffer.put(0, bitangents);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        glBufferData(GL_ARRAY_BUFFER, bitangentsBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, false, 0, 0);
 
-            // Texture coordinates VBO
-            ...
-            glEnableVertexAttribArray(4);
-            glVertexAttribPointer(4, 2, GL_FLOAT, false, 0, 0);
-            ...
-        }
+        // Texture coordinates VBO
+        ...
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 2, GL_FLOAT, false, 0, 0);
+        ...
+        MemoryUtil.memFree(tangentsBuffer);
+        MemoryUtil.memFree(bitangentsBuffer);
+        ...
     }
     ...
 }
