@@ -12,15 +12,6 @@ I started to collect some materials, develop some examples and decided to organi
 
 You can also check my Vulkan book [here](https://github.com/lwjglgamedev/vulkanbook).
 
-## Previous version
-
-Previous version of the book can still be accessed in Github. Here are the links:
-
-* [Book contents](https://github.com/lwjglgamedev/lwjglbook-bookcontents-leg)
-* [Source code](https://github.com/lwjglgamedev/lwjglbook-leg)
-
-**NOTE**: The old version of the book was published, originally, using a different URL. That site is now part of what GitBook considers legacy content. Unfortunately, I cannot access that content any more nor even delete it (according to GitBook this is not possible). Therefore, if you are accessing the book through a GitBook URL which starts with: "https://lwjglgamedev.gitbooks.io/" you are accessing and out of sync version (not even in sync with previous book legacy version which is still hosted in Github).
-
 ## Source Code
 
 The source code of the samples of this book is in [GitHub](https://github.com/lwjglgamedev/lwjglbook).
@@ -32,6 +23,16 @@ The source code for the book itself is also published in [GitHub](https://github
 The book is licensed under [Attribution-ShareAlike 4.0 International \(CC BY-SA 4.0\)](http://creativecommons.org/licenses/by-sa/4.0/)
 
 The source code for the book is licensed under [Apache v2.0](https://www.apache.org/licenses/LICENSE-2.0 "Apache v2.0")
+
+## Previous version
+
+Previous version of the book can still be accessed in Github. Here are the links:
+
+* [Book contents](https://github.com/lwjglgamedev/lwjglbook-bookcontents-leg)
+* [Source code](https://github.com/lwjglgamedev/lwjglbook-leg)
+
+**NOTE**: The old version of the book was published, originally, using a different URL. That site is now part of what GitBook considers legacy content. Unfortunately, I cannot access that content any more nor even delete it (according to GitBook this is not possible). Therefore, if you are accessing the book through a GitBook URL which starts with: "https://lwjglgamedev.gitbooks.io/" you are accessing and out of sync version (not even in sync with previous book legacy version which is still hosted in Github).
+
 
 ## Support
 
