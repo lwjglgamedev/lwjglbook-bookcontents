@@ -178,8 +178,6 @@ $$1 - (1-Cos(\alpha))/(1-Cos(cutOffAngle)$$
 
 \(In our fragment shaders we won’t have the angle but the cosine of the cutoff angle. You can check that the formula above produces values from 0 to 1, 0 when the angle is equal to the cutoff angle and 1 when the angle is 0\).
 
-![Spot Light Sample](spot_light_sample.png)
-
 ## Implementing light classes
 
 Let's start first by creating a set of classes to model the different types of lights. We will start with the class that models point lights:
