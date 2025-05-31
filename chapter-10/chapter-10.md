@@ -536,7 +536,7 @@ We need also to update the `IAppLogic` interface to use the input consumed retur
 ```java
 public interface IAppLogic {
     ...
-    void update(Window window, Scene scene, long diffTimeMillis);
+    void input(Window window, Scene scene, long diffTimeMillis, boolean inputConsumed);
     ...
 }
 ```

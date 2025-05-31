@@ -140,7 +140,25 @@ public class SkyBoxRender {
 }
 ```
 
-The next step to create a new render method for the skybox that will be invoked in the global render method.
+The `createUniforms` method is defined liked this:
+
+```java
+public class SkyBoxRender {
+    ...
+    private void createUniforms() {
+        uniformsMap = new UniformsMap(shaderProgram.getProgramId());
+        uniformsMap.createUniform("projectionMatrix");
+        uniformsMap.createUniform("viewMatrix");
+        uniformsMap.createUniform("modelMatrix");
+        uniformsMap.createUniform("diffuse");
+        uniformsMap.createUniform("txtSampler");
+        uniformsMap.createUniform("hasTexture");
+    }
+    ...
+}
+```
+
+We just create some uniforms to hold data we will need while rendering. The next step to create a new render method for the skybox that will be invoked in the global render method.
 
 ```java
 public class SkyBoxRender {
@@ -187,6 +205,18 @@ public class SkyBoxRender {
 ```
 
 You will see that we are modifying the view matrix prior to loading that data in the associated uniform. Remember that when we move the camera, what we are actually doing is moving the whole world. So if we just multiply the view matrix as it is, the skybox will be displaced when the camera moves. But we do not want this, we want to stick it at the origin coordinates at \(0, 0, 0\). This is achieved by setting to 0 the parts of the view matrix that contain the translation increments \(the `m30`, `m31` and `m32` components\). You may think that you could avoid using the view matrix at all since the sky box must be fixed at the origin. In that case, you would see that the skybox does not rotate with the camera, which is not what we want. We need it to rotate but not translate. To render the skybox, we just set up the uniforms and render the cube associated to the sky box.
+
+Finally, we define a `cleanup` method to properly free resources:
+
+```java
+public class SkyBoxRender {
+    ...
+    public void cleanup() {
+        shaderProgram.cleanup();
+    }
+    ...
+}
+```
 
 In the `Render` class we just need to instantiate the `SkyBoxRender` class and invoke the render method:
 
