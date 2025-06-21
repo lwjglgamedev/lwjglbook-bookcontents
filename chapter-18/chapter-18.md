@@ -65,11 +65,9 @@ public class Mesh {
 
     public Mesh(float[] positions, float[] normals, float[] tangents, float[] bitangents, float[] textCoords, int[] indices,
                 int[] boneIndices, float[] weights, Vector3f aabbMin, Vector3f aabbMax) {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            this.aabbMin = aabbMin;
-            this.aabbMax = aabbMax;
-            ...
-        }        
+        this.aabbMin = aabbMin;
+        this.aabbMax = aabbMax;
+        ...
     }
     ...
     public Vector3f getAabbMax() {
@@ -317,6 +315,8 @@ public class Main implements IAppLogic {
                 modelMatrix.identity();
             }
         }
+
+        scene.setSelectedEntity(selectedEntity);
     }
     ...
 }
@@ -385,6 +385,6 @@ public class Main implements IAppLogic {
 
 You will be able to see how cubes are rendered in blue when licked with the mouse:
 
-![Selected cube](screenshot.png)
+![Selected cube](./screenshot.png)
 
 [Next chapter](../chapter-19/chapter-19.md)
