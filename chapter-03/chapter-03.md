@@ -28,7 +28,7 @@ As in 2D Cartesian coordinate spaces we can change the orientation of the axes i
  
 ![Alternative 3D Cartesian Coordinate System](alt_3d_cartesian_coordinate_system.png)
 
-3D coordinates can be classified in two types: left handed and right handed. How do you know which type it is? Take your hand and form a “L” between your thumb and your index fingers, the middle finger should point in a direction perpendicular to the other two. The thumb should point to the direction where the x axis increases, the index finger should point where the y axis increases and the middle finger should point where the z axis increases. If you are able to do that with your left hand, then it's left handed, if you need to use your right hand is right-handed.
+3D coordinates can be classified in two types: left handed and right handed. How do you know which type it is? Take your hand and form a “L” between your thumb and your index fingers, the middle finger should point in a direction perpendicular to the other two. The thumb should point to the direction where the x axis increases, the index finger should point where the y axis increases and the middle finger should point where the z axis increases. If you are able to do that with your left hand, then it's left handed, if you need to use your right hand it's right-handed.
 
 ![Right Handed vs Left Handed](righthanded_lefthanded.png) 
 
