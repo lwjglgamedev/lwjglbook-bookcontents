@@ -313,7 +313,7 @@ The class that defines the structure of that data and loads it in the GPU is the
 package org.lwjglb.engine.graph;
 
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.*;
 
 import java.nio.FloatBuffer;
 import java.util.*;
