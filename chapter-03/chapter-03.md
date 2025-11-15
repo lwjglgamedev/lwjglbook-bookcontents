@@ -1,6 +1,6 @@
 # Chapter 03 - Your first triangle
 
-In this chapter we will render or first triangle to the screen and introduce the basis of a programmable graphics pipeline. But, prior to that, we will explain first the basis of coordinate systems. trying to introduce some fundamental mathematical concepts in a simple way to support the techniques and topics that we will address in subsequent chapters. We will assume some simplifications which may sacrifice preciseness for the sake of legibility.
+In this chapter we will render our first triangle to the screen and introduce the basis of a programmable graphics pipeline. But, prior to that, we will explain first the basis of coordinate systems. Trying to introduce some fundamental mathematical concepts in a simple way to support the techniques and topics that we will address in subsequent chapters. We will assume some simplifications which may sacrifice preciseness for the sake of legibility.
 
 You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-03).
 
@@ -28,7 +28,7 @@ As in 2D Cartesian coordinate spaces we can change the orientation of the axes i
  
 ![Alternative 3D Cartesian Coordinate System](alt_3d_cartesian_coordinate_system.png)
 
-3D coordinates can be classified in two types: left handed and right handed. How do you know which type it is? Take your hand and form a “L” between your thumb and your index fingers, the middle finger should point in a direction perpendicular to the other two. The thumb should point to the direction where the x axis increases, the index finger should point where the y axis increases and the middle finger should point where the z axis increases. If you are able to do that with your left hand, then its left handed, if you need to use your right hand is right-handed.
+3D coordinates can be classified in two types: left handed and right handed. How do you know which type it is? Take your hand and form a “L” between your thumb and your index fingers, the middle finger should point in a direction perpendicular to the other two. The thumb should point to the direction where the x axis increases, the index finger should point where the y axis increases and the middle finger should point where the z axis increases. If you are able to do that with your left hand, then it's left handed, if you need to use your right hand it's right-handed.
 
 ![Right Handed vs Left Handed](righthanded_lefthanded.png) 
 
@@ -280,7 +280,7 @@ public class Scene {
 }
 ```
 
-As you can see it just store `Mesh` instances in a Map, which is later on used for drawing. But what is a `Mesh`? It is basically our way to load vertices data into the GPU so it can be used for render. Prior to describe in detail the `Mesh` class, let's see how it can be used in our `Main` class:
+As you can see it just stores `Mesh` instances in a Map, which is later on used for drawing. But what is a `Mesh`? It is basically our way to load vertices data into the GPU so it can be used for render. Prior to describe in detail the `Mesh` class, let's see how it can be used in our `Main` class:
 ```java
 public class Main implements IAppLogic {
 
@@ -304,7 +304,7 @@ public class Main implements IAppLogic {
 }
 ```
 
-In the `init` method, we define an array of floats that contain the coordinates of the vertices of a triangle.As you can see there’s no structure in that array, we just dump there all the coordinates As it is right now, OpenGL cannot know the structure of that data. It’s just a sequence of floats. The following picture depicts the triangle in our coordinate system.
+In the `init` method, we define an array of floats that contain the coordinates of the vertices of a triangle. As you can see there’s no structure in that array, we just dump there all the coordinates. As it is right now, OpenGL cannot know the structure of that data. It’s just a sequence of floats. The following picture depicts the triangle in our coordinate system.
 
 ![Triangle](triangle_coordinates.png)
 
@@ -383,7 +383,7 @@ You can consult the details here:  [https://blog.lwjgl.org/memory-management-in-
 
 In this specific case, positions data is short lived, once we have loaded the data, we are done with that buffer. You may think, we then you do not use the `org.lwjgl.system.MemoryStack` class? The reason to use the second approach (`MemoryUtil` class) is that LWJGL's stack is limited. If you end up loading large modes you may consume all the available space and get and "Out of stack space" exception. The drawback for this approach is that we need to manually free the memory once we are done with it by calling `MemoryUtil.memFree`.
 
-After that, we bind the VBO (by calling the `glBindBuffer`) and load the data int it (by calling the `glBufferData` function). Now comes the most important part. We need to define the structure of our data and store it in one of the attribute lists of the VAO. This is done with the following line.
+After that, we bind the VBO (by calling the `glBindBuffer`) and load the data into it (by calling the `glBufferData` function). Now comes the most important part. We need to define the structure of our data and store it in one of the attribute lists of the VAO. This is done with the following line.
 
 ```java
 glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
@@ -478,7 +478,7 @@ public class Render {
 }
 ```
 
- The `render` method starts by clearing the framebuffer and setting the view port (by calling the `glViewport` method) to the window dimensions. That is, we set the rendering area to those dimensions (This does not need to be done for every frame, but if we want toi support window resizing we can do it this way to adapt to potential changes in each frame). After that we just invoke the `render` method over the `SceneRender` instance. And, that’s all! If you followed the steps carefully you will see something like this:
+ The `render` method starts by clearing the framebuffer and setting the view port (by calling the `glViewport` method) to the window dimensions. That is, we set the rendering area to those dimensions (This does not need to be done for every frame, but if we want to support window resizing we can do it this way to adapt to potential changes in each frame). After that we just invoke the `render` method over the `SceneRender` instance. And, that’s all! If you followed the steps carefully you will see something like this:
 
 ![Triangle game](triangle_window.png)
 
