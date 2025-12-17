@@ -8,17 +8,17 @@ You can find the complete source code for this chapter [here](https://github.com
 
 A texture is an image which is mapped to a model to set the color of the pixels of the model. You can think of a texture as a skin that is wrapped around your 3D model. What you do is assign points in the image texture to the vertices in your model. With that information OpenGL is able to calculate the color to apply to the other pixels based on the texture image.
 
-![Texture mapping](texture_mapping.png)
+![Texture mapping](<../.gitbook/assets/texture_mapping (1).png>)
 
 The texture image does not have to be the same size as the model. It can be larger or smaller. OpenGL will extrapolate the color if the pixel to be processed cannot be mapped to a specific point in the texture. You can control how this process is done when a specific texture is created.
 
 So basically what we must do, in order to apply a texture to a model, is assigning texture coordinates to each of our vertices. The texture coordinate system is a bit different from the coordinate system of our model. First of all, we have a 2D texture so our coordinates will only have two components, x and y. Besides that, the origin is setup in the top left corner of the image and the maximum value of the x or y value is 1.
 
-![Texture coordinates](texture_coordinates.png)
+![Texture coordinates](<../.gitbook/assets/texture_coordinates (1).png>)
 
 How do we relate texture coordinates with our position coordinates? Easy, in the same way we passed the color information. We set up a VBO which will have a texture coordinate for each vertex position.
 
-So let’s start modifying the code base to use textures in our 3D cube. The first step is to load the image that will be used as a texture. For this task, we will use the LWJGL wrapper for the [stb](https://github.com/nothings/stb) library. In order to do that,  we need first to declare that dependency, including the natives in our `pom.xml` file.
+So let’s start modifying the code base to use textures in our 3D cube. The first step is to load the image that will be used as a texture. For this task, we will use the LWJGL wrapper for the [stb](https://github.com/nothings/stb) library. In order to do that, we need first to declare that dependency, including the natives in our `pom.xml` file.
 
 ```xml
 <dependency>
@@ -37,6 +37,7 @@ So let’s start modifying the code base to use textures in our 3D cube. The fir
 ```
 
 The first step we will do is to create a new `Texture` class that will perform all the necessary steps to load a texture and is defined like this:
+
 ```java
 package org.lwjglb.engine.graph;
 
@@ -107,18 +108,18 @@ public class Texture {
 The first thing we do in the constructor is to allocate `IntBuffer`s for the library to return the image size and number of channels. Then, we call the `stbi_load` method to actually load the image into a `ByteBuffer`. This method requires the following parameters:
 
 * `filePath`: The absolute path to the file. The stb library is native and does not understand anything about `CLASSPATH`. Therefore, we will be using regular file system paths.
-* `width`:  Image width. This will be populated with the image width.
+* `width`: Image width. This will be populated with the image width.
 * `height`: Image height. This will be populated with the image height.
 * `channels`: The image channels.
 * `desired_channels`: The desired image channels. We pass 4 (RGBA).
 
-One important thing to remember is that OpenGL, for historical reasons, requires that texture images have a size \(number of texels in each dimension\) of a power of two \(2, 4, 8, 16, ....\). I think this is not required by OpenGL drivers anymore but if you have some issues you can try modifying the dimensions.
+One important thing to remember is that OpenGL, for historical reasons, requires that texture images have a size (number of texels in each dimension) of a power of two (2, 4, 8, 16, ....). I think this is not required by OpenGL drivers anymore but if you have some issues you can try modifying the dimensions.
 
 The next step is to upload the texture into the GPU. This will be done in the `generateTexture` method. First of all we need to create a new texture identifier (by calling the `glGenTextures` function). After that we need to bind to that texture (by calling the `glBindTexture`). Then we need to tell OpenGL how to unpack our RGBA bytes. Since each component is one byte in size we just use `GL_UNPACK_ALIGNMENT` for the `glPixelStorei` function. Finally we load the texture data by calling the `glTexImage2D`.
 
 The `glTexImage2D` method has the following parameters:
 
-* `target`: Specifies the target texture \(its type\). In this case: `GL_TEXTURE_2D`. 
+* `target`: Specifies the target texture (its type). In this case: `GL_TEXTURE_2D`.
 * `level`: Specifies the level-of-detail number. Level 0 is the base image level. Level n is the nth mipmap reduction image. More on this later.
 * `internal format`: Specifies the number of colour components in the texture.
 * `width`: Specifies the width of the texture image.
@@ -129,7 +130,6 @@ The `glTexImage2D` method has the following parameters:
 * `data`: The buffer that stores our data.
 
 After that, by calling the `glTexParameteri` function we basically say that when a pixel is drawn with no direct one to one association to a texture coordinate it will pick the nearest texture coordinate point. After that, we generate a mipmap. A mipmap is a decreasing resolution set of images generated from a high detailed texture. These lower resolution images will be used automatically when our object is scaled. We do this when calling the `glGenerateMipmap` function. And that’s all, we have successfully loaded our texture. Now we need to use it.
-
 
 Now we will create a texture cache. It is very frequent that models reuse the same texture, therefore, instead of loading the same texture multiple times, we will cache the textures already loaded to load each texture just once. This will be controlled by the `TextureCache` class:
 
@@ -171,6 +171,7 @@ public class TextureCache {
 ```
 
 As you can see we just store te loaded textures in a `Map` and return a default texture in case texture path is null (models with no textures). The default texture is just a back image which can be combined with model which do not define textures but colors so we can combine both in the fragment shader. The `TextureCache` class instance will be stored in the `Scene` class:
+
 ```java
 public class Scene {
     ...
@@ -191,6 +192,7 @@ public class Scene {
 Now we new to change the way we define models to add support for textures. In order to do so, and to prepare for the more complex models we are going to load in next chapters, we will introduce a new class named `Material`. This class will hold texture path and a list of `Mesh` instances. Therefore, we will associated `Model` instances with a `List` of `Material`'s instead of `Mesh`'es. In next chapters materials will be able to contain other properties, such as diffuse or specular colors.
 
 The `Material` class is defined like this:
+
 ```java
 package org.lwjglb.engine.graph;
 
@@ -224,6 +226,7 @@ public class Material {
 ```
 
 As you can see, `Mesh` instances are now under the `Material` class. Therefore, we need to modify the `Model` class like this:
+
 ```java
 package org.lwjglb.engine.graph;
 
@@ -314,7 +317,7 @@ public class Mesh {
 
 ## Using the textures
 
-Now we need to use the texture in our shaders. In the vertex shader we have changed the second input parameter because now it’s a `vec2` \(we also changed the parameter name). The vertex shader, as in the color case, just passes the texture coordinates to be used by the fragment shader.
+Now we need to use the texture in our shaders. In the vertex shader we have changed the second input parameter because now it’s a `vec2` (we also changed the parameter name). The vertex shader, as in the color case, just passes the texture coordinates to be used by the fragment shader.
 
 ```glsl
 #version 330
@@ -433,35 +436,35 @@ public class UniformsMap {
 
 Right now, we have just modified our code base to support textures. Now we need to setup texture coordinates for our 3D cube. Our texture image file will be something like this:
 
-![Cube texture](cube_texture.png)
+![Cube texture](<../.gitbook/assets/cube_texture (1).png>)
 
 In our 3D model we have eight vertices. Let’s see how this can be done. Let’s first define the front face texture coordinates for each vertex.
 
-![Texture coordinates front face](cube_texture_front_face.png)
+![Texture coordinates front face](<../.gitbook/assets/cube_texture_front_face (1).png>)
 
 | Vertex | Texture Coordinate |
-| --- | --- |
-| V0 | \(0.0, 0.0\) |
-| V1 | \(0.0, 0.5\) |
-| V2 | \(0.5, 0.5\) |
-| V3 | \(0.5, 0.0\) |
+| ------ | ------------------ |
+| V0     | (0.0, 0.0)         |
+| V1     | (0.0, 0.5)         |
+| V2     | (0.5, 0.5)         |
+| V3     | (0.5, 0.0)         |
 
 Now, let’s define the texture mapping of the top face.
 
-![Texture coordinates top face](cube_texture_top_face.png)
+![Texture coordinates top face](<../.gitbook/assets/cube_texture_top_face (1).png>)
 
 | Vertex | Texture Coordinate |
-| --- | --- |
-| V4 | \(0.0, 0.5\) |
-| V5 | \(0.5, 0.5\) |
-| V0 | \(0.0, 1.0\) |
-| V3 | \(0.5, 1.0\) |
+| ------ | ------------------ |
+| V4     | (0.0, 0.5)         |
+| V5     | (0.5, 0.5)         |
+| V0     | (0.0, 1.0)         |
+| V3     | (0.5, 1.0)         |
 
-As you can see we have a problem, we need to setup different texture coordinates for the same vertices \(V0 and V3\). How can we solve this? The only way to solve it is to repeat some vertices and associate different texture coordinates. For the top face we need to repeat the four vertices and assign them the correct texture coordinates.
+As you can see we have a problem, we need to setup different texture coordinates for the same vertices (V0 and V3). How can we solve this? The only way to solve it is to repeat some vertices and associate different texture coordinates. For the top face we need to repeat the four vertices and assign them the correct texture coordinates.
 
-Since the front, back and lateral faces use the same texture we will not need to repeat all of these vertices. You have the complete definition in the source code, but we needed to move from 8 points to 20. 
+Since the front, back and lateral faces use the same texture we will not need to repeat all of these vertices. You have the complete definition in the source code, but we needed to move from 8 points to 20.
 
-In the next chapters we will learn how to load models generated by 3D modeling tools so we won’t need to define by hand the positions and texture coordinates \(which by the way, would be impractical for more complex models\).
+In the next chapters we will learn how to load models generated by 3D modeling tools so we won’t need to define by hand the positions and texture coordinates (which by the way, would be impractical for more complex models).
 
 We just need to modify the `init` method in the `Main` class to define the texture coordinates and load texture data:
 
@@ -588,6 +591,6 @@ public class Main implements IAppLogic {
 
 The final result is like this.
 
-![Cube with texture](cube_with_texture.png)
+![Cube with texture](<../.gitbook/assets/cube_with_texture (1).png>)
 
 [Next chapter](../chapter-08/chapter-08.md)

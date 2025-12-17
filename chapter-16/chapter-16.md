@@ -6,7 +6,7 @@ You can find the complete source code for this chapter [here](https://github.com
 
 ## OpenAL
 
-Audio capability is going to be addressed in this chapter with the help of [OpenAL](https://www.openal.org "OpenAL") (Open Audio Library). OpenAL is the OpenGL counterpart for audio, it allows us to play sounds through an abstraction layer. That layer isolates us from the underlying complexities of the audio subsystem. Besides that, it allows us to “render” sounds in a 3D scene, where sounds can be set up in specific locations, attenuated with the distance and modified according to their velocity (simulating [Doppler effect](https://en.wikipedia.org/wiki/Doppler_effect)\)
+Audio capability is going to be addressed in this chapter with the help of [OpenAL](https://www.openal.org) (Open Audio Library). OpenAL is the OpenGL counterpart for audio, it allows us to play sounds through an abstraction layer. That layer isolates us from the underlying complexities of the audio subsystem. Besides that, it allows us to “render” sounds in a 3D scene, where sounds can be set up in specific locations, attenuated with the distance and modified according to their velocity (simulating [Doppler effect](https://en.wikipedia.org/wiki/Doppler_effect))
 
 Before start coding we need to present the main elements involved when dealing with OpenAL, which are:
 
@@ -28,7 +28,7 @@ And last, but no least, a listener which is where the generated sounds are suppo
 
 So an audio 3D scene is composed by a set of sound sources which emit sound and a listener that receives them. The final perceived sound will depend on the distance of the listener to the different sources, their relative speed and the selected propagation models. Sources can share buffers and play the same data. The following figure depicts a sample 3D scene with the different element types involved.
 
-![OpenAL concepts](openal_concepts.png)
+![OpenAL concepts](<../.gitbook/assets/openal_concepts (1).png>)
 
 ## Implementation
 
@@ -52,7 +52,7 @@ In order to use OpenAL, the first thing is adding maven dependencies to the proj
 ...
 ```
 
-So, let's start coding. We will create a new package under the name ```org.lwjglb.engine.sound``` that will host all the classes responsible for handling audio. We will first start with a class, named ```SoundBuffer``` that will represent an OpenAL buffer. A fragment of the definition of that class is shown below.
+So, let's start coding. We will create a new package under the name `org.lwjglb.engine.sound` that will host all the classes responsible for handling audio. We will first start with a class, named `SoundBuffer` that will represent an OpenAL buffer. A fragment of the definition of that class is shown below.
 
 ```java
 package org.lwjglb.engine.sound;
@@ -117,13 +117,13 @@ public class SoundBuffer {
 }
 ```
 
-The constructor of the class expects a sound file path  and creates a new buffer from it. The first thing that we do is create an OpenAL buffer with the call to ```alGenBuffers```. At the end our sound buffer will be identified by an integer which is like a pointer to the data it holds. Once the buffer has been created we dump the audio data in it. The constructor expects a file in OGG format, so we need to transform it to PCM format. This is done in the `readVorbis ` method.
+The constructor of the class expects a sound file path and creates a new buffer from it. The first thing that we do is create an OpenAL buffer with the call to `alGenBuffers`. At the end our sound buffer will be identified by an integer which is like a pointer to the data it holds. Once the buffer has been created we dump the audio data in it. The constructor expects a file in OGG format, so we need to transform it to PCM format. This is done in the `readVorbis` method.
 
-Previous versions of LWJGL had a helper class named ```WaveData``` which was used to load audio files in WAV format. This class is no longer present in LWJGL 3. Nevertheless, you may get the source code from that class and use it in your games (maybe without requiring any changes).
+Previous versions of LWJGL had a helper class named `WaveData` which was used to load audio files in WAV format. This class is no longer present in LWJGL 3. Nevertheless, you may get the source code from that class and use it in your games (maybe without requiring any changes).
 
-The ```SoundBuffer``` class also provides a `cleanup` method to free the resources when we are done with it.
+The `SoundBuffer` class also provides a `cleanup` method to free the resources when we are done with it.
 
-Let's continue by modelling an OpenAL, which will be implemented by class named ```SoundSource```. The class is defined below.
+Let's continue by modelling an OpenAL, which will be implemented by class named `SoundSource`. The class is defined below.
 
 ```java
 package org.lwjglb.engine.sound;
@@ -178,13 +178,13 @@ public class SoundSource {
 }
 ```
 
-The sound source class provides some methods to setup its position, the gain, and control methods for playing, stopping, and pausing it. Keep in mind that sound control actions are made over a source (not over the buffer), remember that several sources can share the same buffer. As in the ```SoundBuffer``` class, a ```SoundSource``` is identified by an identifier, which is used in each operation. This class also provides a ```cleanup``` method to free the reserved resources. But let’s examine the constructor. The first thing that we do is to create the source with the ```alGenSources``` call. Then, we set up some interesting properties using the constructor parameters.
+The sound source class provides some methods to setup its position, the gain, and control methods for playing, stopping, and pausing it. Keep in mind that sound control actions are made over a source (not over the buffer), remember that several sources can share the same buffer. As in the `SoundBuffer` class, a `SoundSource` is identified by an identifier, which is used in each operation. This class also provides a `cleanup` method to free the reserved resources. But let’s examine the constructor. The first thing that we do is to create the source with the `alGenSources` call. Then, we set up some interesting properties using the constructor parameters.
 
-The first parameter, ```loop```, indicates if the sound to be played should be in loop mode or not. By default, when a play action is invoked over a source the playing stops when the audio data is consumed. This is fine for some sounds, but some others, like background music, need to be played over and over again. Instead of manually controlling when the audio has stopped and re-launch the play process, we just simply set the looping property to true: “```alSourcei(sourceId, AL_LOOPING, AL_TRUE);```”.
+The first parameter, `loop`, indicates if the sound to be played should be in loop mode or not. By default, when a play action is invoked over a source the playing stops when the audio data is consumed. This is fine for some sounds, but some others, like background music, need to be played over and over again. Instead of manually controlling when the audio has stopped and re-launch the play process, we just simply set the looping property to true: “`alSourcei(sourceId, AL_LOOPING, AL_TRUE);`”.
 
-The other parameter, ```relative```, controls if the position of the source is relative to the listener or not. In this case, when we set the position for a source, we basically are defining the distance (with a vector) to the listener, not the position in the OpenAL 3D scene, not the world position. This activated by the “```alSourcei(sourceId, AL_SOURCE_RELATIVE, AL_TRUE);”``` call. But, What can we use this for? This property is interesting, for instance, for background sounds that shouldn't be affected (attenuated) by the distance to the listener. Think, for instance, in background music or sound effects related to player controls. If we set these sources as relative, and set their position to $$(0, 0, 0)$$ they will not be attenuated.
+The other parameter, `relative`, controls if the position of the source is relative to the listener or not. In this case, when we set the position for a source, we basically are defining the distance (with a vector) to the listener, not the position in the OpenAL 3D scene, not the world position. This activated by the “`alSourcei(sourceId, AL_SOURCE_RELATIVE, AL_TRUE);”` call. But, What can we use this for? This property is interesting, for instance, for background sounds that shouldn't be affected (attenuated) by the distance to the listener. Think, for instance, in background music or sound effects related to player controls. If we set these sources as relative, and set their position to $$(0, 0, 0)$$ they will not be attenuated.
 
-Now it’s turn for the listener which, surprise, is modelled by a class named ```SoundListener```. Here’s the definition for that class.
+Now it’s turn for the listener which, surprise, is modelled by a class named `SoundListener`. Here’s the definition for that class.
 
 ```java
 package org.lwjglb.engine.sound;
@@ -221,15 +221,15 @@ public class SoundListener {
 }
 ```
 
-A difference you will notice from the previous classes is that there’s no need to create a listener. There will always be one listener, so no need to create one, it’s already there for us. Thus, in the constructor we just simply set its initial position. For the same reason there’s no need for a ```cleanup``` method. The class has methods also for setting listener position and velocity, as in the ```SoundSource``` class, but we have an extra method for changing the listener orientation. Let’s review what orientation is all about. Listener orientation is defined by two vectors, “at” vector and “up” one, which are shown in the next figure.
+A difference you will notice from the previous classes is that there’s no need to create a listener. There will always be one listener, so no need to create one, it’s already there for us. Thus, in the constructor we just simply set its initial position. For the same reason there’s no need for a `cleanup` method. The class has methods also for setting listener position and velocity, as in the `SoundSource` class, but we have an extra method for changing the listener orientation. Let’s review what orientation is all about. Listener orientation is defined by two vectors, “at” vector and “up” one, which are shown in the next figure.
 
-![Listener at and up vectors](listener_at_up.png)
+![Listener at and up vectors](<../.gitbook/assets/listener_at_up (1).png>)
 
-The “at” vector basically points where the listener is facing, and by default its coordinates are $$(0, 0, -1)$$. The “up” vector determines which direction is up for the listener, and by default it points to $$(0, 1, 0)$$. So the three components of each of those two vectors are what are set in the ```alListenerfv``` method call. This method is used to transfer a set of floats (a variable number of floats) to a property, in this case, the orientation.
+The “at” vector basically points where the listener is facing, and by default its coordinates are $$(0, 0, -1)$$. The “up” vector determines which direction is up for the listener, and by default it points to $$(0, 1, 0)$$. So the three components of each of those two vectors are what are set in the `alListenerfv` method call. This method is used to transfer a set of floats (a variable number of floats) to a property, in this case, the orientation.
 
 Before continuing, it's necessary to stress out some concepts in relation to source and listener speeds. The relative speed between sources and listener will cause OpenAL to simulate Doppler effect. In case you don’t know, Doppler effect is what causes that a moving object that is getting closer to you seems to emit in a higher frequency than it seems to emit when it is moving away. The thing is, that simply by setting a source or listener velocity, OpenAL will not update their position for you. It will use the relative velocity to calculate the Doppler effect, but the positions won’t be modified. So, if you want to simulate a moving source or listener, you must take care of updating their positions in the game loop.
 
-Now that we have modelled the key elements, we can set them up to work; we need to initialize the OpenAL library, so we will create a new class named ```SoundManager``` that will handle this and starts like this:
+Now that we have modelled the key elements, we can set them up to work; we need to initialize the OpenAL library, so we will create a new class named `SoundManager` that will handle this and starts like this:
 
 ```java
 package org.lwjglb.engine.sound;
@@ -273,7 +273,7 @@ public class SoundManager {
 }
 ```
 
-This class holds references to the ```SoundBuffer``` and ```SoundSource``` instances to track and later cleanup them properly. SoundBuffers are stored in a List but SoundSources are stored in in a ```Map``` so they can be retrieved by a name. The constructor initializes the OpenAL subsystem:
+This class holds references to the `SoundBuffer` and `SoundSource` instances to track and later cleanup them properly. SoundBuffers are stored in a List but SoundSources are stored in in a `Map` so they can be retrieved by a name. The constructor initializes the OpenAL subsystem:
 
 * Opens the default device.
 * Create the capabilities for that device.
@@ -342,7 +342,8 @@ public class SoundManager {
     ...
 }
 ```
-The ```SoundManager``` class also has a method to update the listener orientation given a camera position. In our case, the listener will be placed whenever the camera is. So, given camera position and rotation information, how do we calculate the “at” and “up” vectors? The answer is by using the view matrix associated to the camera. We need to transform the “at” $$(0, 0, -1)$$ and “up” $$(0, 1, 0)$$ vectors taking into consideration camera rotation. Let ```cameraMatrix``` be the view matrix associated to the camera. The code to accomplish that is:
+
+The `SoundManager` class also has a method to update the listener orientation given a camera position. In our case, the listener will be placed whenever the camera is. So, given camera position and rotation information, how do we calculate the “at” and “up” vectors? The answer is by using the view matrix associated to the camera. We need to transform the “at” $$(0, 0, -1)$$ and “up” $$(0, 1, 0)$$ vectors taking into consideration camera rotation. Let `cameraMatrix` be the view matrix associated to the camera. The code to accomplish that is:
 
 ```java
 public class SoundManager {
@@ -360,7 +361,7 @@ public class SoundManager {
 }
 ```
 
-The code above is equivalent to the explanation decsribed previously, it’s just a more efficient approach. It uses a faster method, available in [JOML](https://github.com/JOML-CI/JOML) library, that just does not need to calculate the full inverse matrix but achieves the same results. This method was provided by the [JOML author](https://github.com/httpdigest) in a LWJGL forum, so you can check more details [there](http://forum.lwjgl.org/index.php?topic=6080.0). If you check the source code you will see that the ```SoundManager``` class calculates its own copy of the view matrix. 
+The code above is equivalent to the explanation decsribed previously, it’s just a more efficient approach. It uses a faster method, available in [JOML](https://github.com/JOML-CI/JOML) library, that just does not need to calculate the full inverse matrix but achieves the same results. This method was provided by the [JOML author](https://github.com/httpdigest) in a LWJGL forum, so you can check more details [there](http://forum.lwjgl.org/index.php?topic=6080.0). If you check the source code you will see that the `SoundManager` class calculates its own copy of the view matrix.
 
 And that’s all. We have all the infrastructure we need in order to play sounds. We just need to use it in the `Main` class where we set up a background sound and a specific sound whish is activated at a specific animation frame with its intensity relative to listener position:
 
@@ -424,6 +425,6 @@ public class Main implements IAppLogic {
 }
 ```
 
-A final note. OpenAL also allows you to change the attenuation model by using the alDistanceModel and passing the model you want (```AL11.AL_EXPONENT_DISTANCE```, ```AL_EXPONENT_DISTANCE_CLAMP```, etc.). You can play with them and check the results.
+A final note. OpenAL also allows you to change the attenuation model by using the alDistanceModel and passing the model you want (`AL11.AL_EXPONENT_DISTANCE`, `AL_EXPONENT_DISTANCE_CLAMP`, etc.). You can play with them and check the results.
 
 [Next chapter](../chapter-17/chapter-17.md)

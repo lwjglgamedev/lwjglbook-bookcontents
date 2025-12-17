@@ -56,13 +56,13 @@ Prior to see what an `Entity` looks like, let us discuss a little bit about mode
 * Rotation: Rotate an object by some amount of degrees around any of the three axes.
 * Scale: Adjust the size of an object.
 
-![Transformations](transformations.png)
+![Transformations](<../.gitbook/assets/transformations (1).png>)
 
-The operations described above are known as transformations. And you are probably guessing, correctly, that the way we are going to achieve that is by multiplying our coordinates by a set of matrices \(one for translation, one for rotation and one for scaling\). Those three matrices will be combined into a single matrix called world matrix and passed as a uniform to our vertex shader.
+The operations described above are known as transformations. And you are probably guessing, correctly, that the way we are going to achieve that is by multiplying our coordinates by a set of matrices (one for translation, one for rotation and one for scaling). Those three matrices will be combined into a single matrix called world matrix and passed as a uniform to our vertex shader.
 
-The reason why it is called world matrix is because we are transforming from model coordinates to world coordinates. When you learn about loading 3D models you will see that those models are defined in their own coordinate systems. They don’t know the size of your 3D space and they need to be placed in it. So when we multiply our coordinates by our matrix what we are doing is transforming from one coordinate system \(the model one\) to another \(the one for our 3D world\).
+The reason why it is called world matrix is because we are transforming from model coordinates to world coordinates. When you learn about loading 3D models you will see that those models are defined in their own coordinate systems. They don’t know the size of your 3D space and they need to be placed in it. So when we multiply our coordinates by our matrix what we are doing is transforming from one coordinate system (the model one) to another (the one for our 3D world).
 
-That world matrix will be calculated like this \(the order is important since multiplication using matrices is not commutative\):
+That world matrix will be calculated like this (the order is important since multiplication using matrices is not commutative):
 
 $$
 World Matrix=\left[Translation Matrix\right]\left[Rotation Matrix\right]\left[Scale Matrix\right]
@@ -71,23 +71,14 @@ $$
 If we include our projection matrix in the transformation matrix it would be like this:
 
 $$
-\begin{array}{lcl}
-Transf & = & \left[Proj Matrix\right]\left[Translation Matrix\right]\left[Rotation Matrix\right]\left[Scale Matrix\right] \\
- & = & \left[Proj Matrix\right]\left[World Matrix\right]
-\end{array}
+\begin{array}{lcl} Transf & = & \left[Proj Matrix\right]\left[Translation Matrix\right]\left[Rotation Matrix\right]\left[Scale Matrix\right] \\ & = & \left[Proj Matrix\right]\left[World Matrix\right] \end{array}
 $$
 
 The translation matrix is defined like this:
 
 $$
-\begin{bmatrix}
-1 & 0 & 0 & dx \\
-0 & 1 & 0 & dy \\
-0 & 0 & 1 & dz \\
-0 & 0 & 0 & 1
-\end{bmatrix}
+\begin{bmatrix} 1 & 0 & 0 & dx \\ 0 & 1 & 0 & dy \\ 0 & 0 & 1 & dz \\ 0 & 0 & 0 & 1 \end{bmatrix}
 $$
-
 
 Translation Matrix Parameters:
 
@@ -98,14 +89,8 @@ Translation Matrix Parameters:
 The scale matrix is defined like this:
 
 $$
-\begin{bmatrix}
-sx & 0 & 0 & 0 \\
-0 & sy & 0 & 0 \\
-0 & 0 & sz & 0 \\
-0 & 0 & 0 & 1
-\end{bmatrix}
+\begin{bmatrix} sx & 0 & 0 & 0 \\ 0 & sy & 0 & 0 \\ 0 & 0 & sz & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}
 $$
-
 
 Scale Matrix Parameters:
 
@@ -116,6 +101,7 @@ Scale Matrix Parameters:
 The rotation matrix is much more complex. But keep in mind that it can be constructed by the multiplication of 3 rotation matrices for a single axis, each or by applying a quaternion (more on this later).
 
 So let us define the `Entity` class:
+
 ```java
 package org.lwjglb.engine.scene;
 
@@ -186,7 +172,7 @@ public class Entity {
 As you can see a `Model` instance also has a unique identifier and defines attributes for its position (as a 3 components vector), its scale (just a float, we will be assuming that we scale evenly across all three axis) and rotation (as a quaternion). We could have store rotation information storing rotation angles for pitch, yaw and roll, but instead we are using a strange mathematical artifact, named quaternion, that you may not have heard of. The problem with using rotation angles is the so called gimbal lock. When applying rotation using these angles (called Euler angles) we may end up aligning two rotating axis and losing degrees of freedom, resulting in the inability to properly rotate an object. Quaternions do not have these problem. Instead of me trying to poorly explain what quaternions are, let me just link to an excellent [blog entry](https://www.3dgep.com/understanding-quaternions/) which explain all the concepts behind them. If you do not want to deep dive into them, just keep in mind that they will allow to express rotations without the problems of Euler angles.
 
 All the transformations applied to a model are defined by a 4x4 matrix, therefore a `Model` instance stores a `Matrix4f` instance which is automatically constructed by JOML method `translationRotateScale` using position, scale and rotation. We will need to call the `updateModelMatrix` method each time we modify the attributes of a `Model` instance to update that matrix.
- 
+
 ## Other code changes
 
 We need to change the `Scene` class to store models instead of directly `Mesh` instances. In addition to that, we need to add support for linking `Entity` instances with models so we can later on render them.
@@ -240,6 +226,7 @@ public class Scene {
 ```
 
 Now we need to modify a little it the `SceneRender` class. Ths first thing that we need to do is to pass model matrix information to the shader through an uniform. Therefore, we will create a new uniform named `modelMatrix` in the vertex shader and, consequently, retrieve its location in the `createUniforms` method.
+
 ```java
 public class SceneRender {
     ...
@@ -252,6 +239,7 @@ public class SceneRender {
 ```
 
 The next step is to modify the `render` method to change how we access models and set up properly the model matrix uniform:
+
 ```java
 public class SceneRender {
     ...
@@ -283,6 +271,7 @@ public class SceneRender {
 As you can see, we iterate over the models, then over their meshes, binding their VAO and after that we get the associated entities. For each entity, prior to invoking the drawing call, we fill up the `modelMatrix` uniform with the proper data.
 
 The next step is to modify the vertex shader to use the `modelMatrix` uniform.
+
 ```glsl
 #version 330
 
@@ -308,6 +297,7 @@ But you may think now that if the model matrix does not change per `Entity` inst
 Finally another very important aspect to remark is the order of multiplication of the matrices. We first need to multiply position information by model matrix, that is we transform model coordinates in world space. After that, we apply the projection. Keep in mind that matrix multiplication is not commutative, so order is very important.
 
 Now we need to modify the `Main` class to adapt to the new way of loading models and entities and the coordinates of indices of a 3D cube.
+
 ```java
 public class Main implements IAppLogic {
 
@@ -382,11 +372,12 @@ public class Main implements IAppLogic {
 
 In order to draw a cube we just need to define eight vertices. Since we have 4 more vertices we need to update the array of colors
 
-![Cube coords](cube_coords.png)
+![Cube coords](<../.gitbook/assets/cube_coords (1).png>)
 
-Since a cube is made of six faces we need to draw twelve triangles \(two per face\), so we need to update the indices array. Remember that triangles must be defined in counter-clock wise order. If you do this by hand, is easy to make mistakes. Always put the face that you want to define indices for in front of you. Then, identify the vertices and draw the triangles in counter-clock wise order. Finally, we create a model with just one mesh and an entity associated to that model.
+Since a cube is made of six faces we need to draw twelve triangles (two per face), so we need to update the indices array. Remember that triangles must be defined in counter-clock wise order. If you do this by hand, is easy to make mistakes. Always put the face that you want to define indices for in front of you. Then, identify the vertices and draw the triangles in counter-clock wise order. Finally, we create a model with just one mesh and an entity associated to that model.
 
 We will first use the `input` method to modify the cube position by using cursor arrows and its scale by using `Z` and `X`key. We just need to detect the key that has been pressed, update the cube entity position and /or scale and finally update its model matrix.
+
 ```java
 public class Main implements IAppLogic {
     ...
@@ -425,6 +416,7 @@ public class Main implements IAppLogic {
 ```
 
 In order to better view the cube we will change code that rotates the model in the `Main` class to rotate along the three axes. We will do this in the `update` method.
+
 ```java
 public class Main implements IAppLogic {
     ...
@@ -442,7 +434,7 @@ public class Main implements IAppLogic {
 
 And that’s all. We are now able to display a spinning 3D cube. You can now compile and run your example and you will obtain something like this.
 
-![Cube with no depth tests](cube_no_depth_test.png)
+![Cube with no depth tests](<../.gitbook/assets/cube_no_depth_test (1).png>)
 
 There is something weird with this cube. Some faces are not being painted correctly. What is happening? The reason why the cube has this aspect is that the triangles that compose the cube are being drawn in a sort of random order. The pixels that are far away should be drawn before pixels that are closer. This is not happening right now and in order to do that we must enable depth testing.
 
@@ -462,6 +454,6 @@ public class Render {
 
 Now our cube is being rendered correctly!
 
-![Cube with depth test](cube_depth_test.png)
+![Cube with depth test](<../.gitbook/assets/cube_depth_test (1).png>)
 
 [Next chapter](../chapter-07/chapter-07.md)

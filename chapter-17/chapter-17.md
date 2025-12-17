@@ -1,4 +1,4 @@
-# Chapter 17 - Shadows
+# Chapter 17 - Cascade shadow maps
 
 Currently we are able to represent how light affects the objects in a 3D scene. Objects that get more light are shown brighter than objects that do not receive light. However we are still not able to cast shadows. Shadows will increase the degree of realism of a 3D scene. This is what we will do in this chapter.
 
@@ -8,60 +8,52 @@ You can find the complete source code for this chapter [here](https://github.com
 
 We will use a technique named Shadow mapping which is widely used in games and does not severely affect the engine performance. Shadow mapping may seem simple to understand but it’s somehow difficult to implement correctly. Or, to be more precise, it’s very difficult to implement it in a general way that covers all the potential cases and produces consistent results.
 
-So let’s start by thinking how we could check if a specific area \(indeed a fragment\) is in shadow or not. While drawing that area if we can cast rays to the light source and reach the light source without any collision then that pixel is in light. If not, the pixel is in shadow.
+So let’s start by thinking how we could check if a specific area (indeed a fragment) is in shadow or not. While drawing that area if we can cast rays to the light source and reach the light source without any collision then that pixel is in light. If not, the pixel is in shadow.
 
 The following picture shows the case for a point light: point PA can reach the source light, but points PB and PC can’t so they are in shadow.
 
-![Shadow Concepts I](shadow_concepts_I.png)
+![Shadow Concepts I](<../.gitbook/assets/shadow_concepts_I (1).png>)
 
-How we can check in an efficient manner if we can cast that ray without collisions? A light source can theoretically cast infinitely ray lights, so how do we check if a ray light is blocked or not?
-What we can do instead of casting ray lights is to look at the 3D scene from the light’s perspective and render the scene from that location. We can set the camera at the light position and render the scene so we can store the depth for each fragment. This is equivalent to calculate the distance of each fragment to the light source. At the end, what we are doing is storing the minimum distance as seen from the light source as a shadow map.
+How we can check in an efficient manner if we can cast that ray without collisions? A light source can theoretically cast infinitely ray lights, so how do we check if a ray light is blocked or not? What we can do instead of casting ray lights is to look at the 3D scene from the light’s perspective and render the scene from that location. We can set the camera at the light position and render the scene so we can store the depth for each fragment. This is equivalent to calculate the distance of each fragment to the light source. At the end, what we are doing is storing the minimum distance as seen from the light source as a shadow map.
 
-The following picture shows a cube floating over a plane and  a perpendicular light.
+The following picture shows a cube floating over a plane and a perpendicular light.
 
-![Shadow Concepts II](shadow_concepts_II.png)
+![Shadow Concepts II](<../.gitbook/assets/shadow_concepts_II (1).png>)
 
-The scene as seen from the light perspective would be something like this \(the darker the color, the closer to the light source\).
+The scene as seen from the light perspective would be something like this (the darker the color, the closer to the light source).
 
-![Rendering from light perspective](render_light_perspective.png)
+![Rendering from light perspective](<../.gitbook/assets/render_light_perspective (1).png>)
 
 With that information we can render the 3D scene as usual and check the distance for each fragment to the light source with the minimum stored distance. If the distance is less that the value stored in the shadow map, then the object is in light, otherwise it's in shadow. We can have several objects that could be hit by the same ray light, but we store the minimum distance.
 
 Thus, shadow mapping is a two step process:
 
 * First we render the scene from the light space into a shadow map to get the minimum distances.
-* Second we render the scene from the camera point of view and use that depth  map to calculate if objects are in shadow or not.
+* Second we render the scene from the camera point of view and use that depth map to calculate if objects are in shadow or not.
 
-In order to render the depth map we need to talk about the depth buffer. When we render a scene, all the depth information is stored in a buffer named, obviously, depth-buffer \(or z-buffer\). That depth information is the $$z$$ value of each of the fragment that is rendered. If you recall from the first chapters what we are doing while rendering a scene is transforming from world coordinates to screen coordinates. We are drawing to a coordinate space which ranges from $$0$$ to $$1$$ for $$x$$ and $$y$$ axis. If an object is more distant than another, we must calculate how this affects their $$x$$ and $$y$$ coordinates through the perspective projection matrix. This is not calculated automatically depending on the $$z$$ value, but must be done us. What is actually stored in the z coordinate is the depth of that fragment, nothing less and nothing more.
+In order to render the depth map we need to talk about the depth buffer. When we render a scene, all the depth information is stored in a buffer named, obviously, depth-buffer (or z-buffer). That depth information is the $$z$$ value of each of the fragment that is rendered. If you recall from the first chapters what we are doing while rendering a scene is transforming from world coordinates to screen coordinates. We are drawing to a coordinate space which ranges from $$0$$ to $$1$$ for $$x$$ and $$y$$ axis. If an object is more distant than another, we must calculate how this affects their $$x$$ and $$y$$ coordinates through the perspective projection matrix. This is not calculated automatically depending on the $$z$$ value, but must be done us. What is actually stored in the z coordinate is the depth of that fragment, nothing less and nothing more.
 
 ## Cascaded Shadow Maps
 
-The solution presented above, as it is, does not produce quality results for open spaces. The reason for that is that shadows resolution is limited by the texture size. We are covering now a potentially huge area, and textures we are using to store depth information have not enough resolution in order to get good results. You may think that the solution is just to increase texture resolution, but this is not sufficient to completely fix the problem. You would need huge textures for that. Therefore, once explained the basis we will explain a technique called Cascaded Shadow Maps \(CSM\) which is an improvement over the plain shadow maps one.
+The solution presented above, as it is, does not produce quality results for open spaces. The reason for that is that shadows resolution is limited by the texture size. We are covering now a potentially huge area, and textures we are using to store depth information have not enough resolution in order to get good results. You may think that the solution is just to increase texture resolution, but this is not sufficient to completely fix the problem. You would need huge textures for that. Therefore, once explained the basis we will explain a technique called Cascaded Shadow Maps (CSM) which is an improvement over the plain shadow maps one.
 
 The key concept is that, shadows of objects that are closer to the camera need to have a higher quality than shadows for distant objects. One approach could be to just render shadows for objects close to the camera, but this would cause shadows to appear / disappear as long as we move through the scene.
 
-The approach that Cascaded Shadow Maps \(CSMs\) use is to divide the view frustum into several splits. Splits closer to the camera cover a smaller amount spaces whilst distant regions cover a much wider region of space. The next figure shows a view frustum divided into three splits.
+The approach that Cascaded Shadow Maps (CSMs) use is to divide the view frustum into several splits. Splits closer to the camera cover a smaller amount spaces whilst distant regions cover a much wider region of space. The next figure shows a view frustum divided into three splits.
 
-![Cascade splits](cascade_splits.png)
+![Cascade splits](<../.gitbook/assets/cascade_splits (1).png>)
 
 For each of these splits, the depth map is rendered, adjusting the light view and projection matrices to cover fit to each split. Thus, the texture that stores the depth map covers a reduced area of the view frustum. And, since the split closest to the camera covers less space, the depth resolution is increased.
 
 As it can be deduced from the explanation above, we will need as many depth textures as splits, and we will also change the light view and projection matrices for each of the. Hence, the steps to be done in order to apply CSMs are:
 
 * Divide the view frustum into n splits.
-
 * While rendering the depth map, for each split:
-
   * Calculate light view and projection matrices.
-
   * Render the scene from light’s perspective into a separate depth map
-
 * While rendering the scene:
-
   * Use the depths maps calculated above.
-
   * Determine the split that the fragment to be drawn belongs to.
-
   * Calculate shadow factor as in shadow maps.
 
 As you can see, the main drawback of CSMs is that we need to render the scene, from light’s perspective, for each split. This is why is often only used for open spaces (of course you can apply caching to shadow calculations to reduce overhead).
@@ -144,7 +136,7 @@ public class CascadeShadow {
 }
 ```
 
-The algorithm used to calculate the split positions, uses a logarithm schema to better distribute the distances. We could just use other different approaches, such as splitting the cascades evenly, or according to a pre-set proportion,. The advantage of the logarithm schema is that it uses less space for near view splits, achieving a higher resolution for the elements closer to the camera. You can check the [NVIDIA article](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html) for the math details. The `cascadeSplits` array will have a set of values in the range [0, 1] which we will use later on to perform the required calculations to get the split distances and the projection matrices for each cascade.
+The algorithm used to calculate the split positions, uses a logarithm schema to better distribute the distances. We could just use other different approaches, such as splitting the cascades evenly, or according to a pre-set proportion,. The advantage of the logarithm schema is that it uses less space for near view splits, achieving a higher resolution for the elements closer to the camera. You can check the [NVIDIA article](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html) for the math details. The `cascadeSplits` array will have a set of values in the range \[0, 1] which we will use later on to perform the required calculations to get the split distances and the projection matrices for each cascade.
 
 Now we define a loop to calculate all the data for the cascade splits. In that loop, we first create the frustum corners in NDC (Normalized Device Coordinates) space. After that, we project those coordinates into world space by using the inverse of the view and perspective matrices. Since we are using directional lights, we will use ortographic projection matrices for rendering the shadow maps, this is the reason why we set, as the NDC coordinates, just the limits of the cube that contains the visible volume (distant objects will not be rendered smaller, as in the perspective projection).
 
@@ -266,6 +258,7 @@ public class CascadeShadow {
     ...
 }
 ```
+
 We have now completed the code that calculates the matrices required to render the shadow maps. Therefore, we can start coding the classes required to perform that rendering. In this case, we will be rendering to a different image (a depth image). We will need one texture per cascade map split. In order to manage that, we will create a new class named `ArrTexture` that will create a set of textures and it is defined like this:
 
 ```java
@@ -310,7 +303,7 @@ public class ArrTexture {
 
 We set the texture wrapping mode to `GL_CLAMP_TO_EDGE` since we do not want the texture to repeat in case we exceed the $$[0, 1]$$ range.
 
-So now that we are able to create empty textures, we need to be able to render a scene into it. In order to do that we need to use Frame Buffers Objects \(or FBOs\). A Frame Buffer is a collection of buffers that can be used as a destination for rendering. When we have been rendering to the screen we have using OpenGL’s default buffer. OpenGL allows us to render to user defined buffers by using FBOs. We will isolate the rest of the code of the process of creating FBOs for shadow mapping by creating a new class named `ShadowBuffer`. This is the definition of that class.
+So now that we are able to create empty textures, we need to be able to render a scene into it. In order to do that we need to use Frame Buffers Objects (or FBOs). A Frame Buffer is a collection of buffers that can be used as a destination for rendering. When we have been rendering to the screen we have using OpenGL’s default buffer. OpenGL allows us to render to user defined buffers by using FBOs. We will isolate the rest of the code of the process of creating FBOs for shadow mapping by creating a new class named `ShadowBuffer`. This is the definition of that class.
 
 ```java
 package org.lwjglb.engine.graph;
@@ -372,7 +365,7 @@ public class ShadowBuffer {
 }
 ```
 
-The `ShadowBuffer` class defines two constants that determine the size of the texture that will  hold the depth map. It also defines two attributes, one for the FBO and one for the texture. In the constructor, we create a new FBO and an array of textures. Each elements of that array will be used to render a shadow map for each cascade shadow split. For the FBO we will use as the pixel format the constant `GL_DEPTH_COMPONENT` since we are only interested in storing depth values. Then we attach the FBO to the texture instance.
+The `ShadowBuffer` class defines two constants that determine the size of the texture that will hold the depth map. It also defines two attributes, one for the FBO and one for the texture. In the constructor, we create a new FBO and an array of textures. Each elements of that array will be used to render a shadow map for each cascade shadow split. For the FBO we will use as the pixel format the constant `GL_DEPTH_COMPONENT` since we are only interested in storing depth values. Then we attach the FBO to the texture instance.
 
 The following lines explicitly set the FBO to not render any color. A FBO needs a color buffer, but we are not going to needed. This is why we set the color buffers to be used as `GL_NONE`.
 
@@ -615,11 +608,11 @@ in vec4 outWorldPosition;
 
 We first define a set of constants:
 
-- `DEBUG_SHADOWS`: This will control if we apply a color to the fragments to identify the cascade split to which they will assigned (it will need to have the value `1` to activate this).
-- `SHADOW_FACTOR`: The darkening factor that fill be applied to a fragment when in shadow.
-- `BIAS`: The depth bias to apply when estimating if a fragment is affected by a shadow or not. This is used to reduce shadow artifacts, such as shadow acne.TShadow acne is produced by the limited resolution of the texture that stores the depth map which will produce strange artifacts.  We will solve this problem by setting a threshold that will reduce precision problems.
+* `DEBUG_SHADOWS`: This will control if we apply a color to the fragments to identify the cascade split to which they will assigned (it will need to have the value `1` to activate this).
+* `SHADOW_FACTOR`: The darkening factor that fill be applied to a fragment when in shadow.
+* `BIAS`: The depth bias to apply when estimating if a fragment is affected by a shadow or not. This is used to reduce shadow artifacts, such as shadow acne.TShadow acne is produced by the limited resolution of the texture that stores the depth map which will produce strange artifacts. We will solve this problem by setting a threshold that will reduce precision problems.
 
-After that, wee define the new uniforms which store cascade splits and the textures of the shadow maps. We will need also to pass to the shader the inverse view matrix. In previous chapter, we used the inverse of the projection matrix to get the fragment position in view coordinates. In this case, we need to go a step beyond and get the fragment position also in world coordinates, if we multiply the inverse view matrix by the fragment position in view coordinates we will get the world coordinates. In addition to that, we need the projection view matrices of the cascade splits as well as their split distances. We also need an array of uniforms with the cascade information and array of samplers to access, as an array of textures, the results of the shadow render process. Instead of an array of sampler you could use a `sampler2DArray` (with an array of samplers, such as the one used here,  you could make each shadow map cascade texture to have a different size. So it offers a little bit more of flexibility, although we are not exploiting that here)
+After that, wee define the new uniforms which store cascade splits and the textures of the shadow maps. We will need also to pass to the shader the inverse view matrix. In previous chapter, we used the inverse of the projection matrix to get the fragment position in view coordinates. In this case, we need to go a step beyond and get the fragment position also in world coordinates, if we multiply the inverse view matrix by the fragment position in view coordinates we will get the world coordinates. In addition to that, we need the projection view matrices of the cascade splits as well as their split distances. We also need an array of uniforms with the cascade information and array of samplers to access, as an array of textures, the results of the shadow render process. Instead of an array of sampler you could use a `sampler2DArray` (with an array of samplers, such as the one used here, you could make each shadow map cascade texture to have a different size. So it offers a little bit more of flexibility, although we are not exploiting that here)
 
 ```glsl
 ...
@@ -647,7 +640,7 @@ float calcShadow(vec4 worldPosition, int idx) {
 ...
 ```
 
-This function, transforms from world coordinates space to the NDC space of the directional light, for a specific cascade split, using its ortographic projection. That is, we multiply world space by the projection view matrix of the specified cascade split. After that, we need to transform those coordinates to texture coordinates (that is in the range [0, 1], starting at the top left corner). With that information, we will use `textureProj` function which just selects the proper shadow map texture to use and depending on the resulting value will apply the shadow factor:
+This function, transforms from world coordinates space to the NDC space of the directional light, for a specific cascade split, using its ortographic projection. That is, we multiply world space by the projection view matrix of the specified cascade split. After that, we need to transform those coordinates to texture coordinates (that is in the range \[0, 1], starting at the top left corner). With that information, we will use `textureProj` function which just selects the proper shadow map texture to use and depending on the resulting value will apply the shadow factor:
 
 ```glsl
 ...
@@ -667,6 +660,7 @@ float textureProj(vec4 shadowCoord, vec2 offset, int idx) {
 ```
 
 In the `main` function, taking as an input the view position, we iterate over the split distances, calculated for each cascade split, to determine the cascade index that this fragment belongs to and calculate the shadow factor:
+
 ```glsl
 ...
 void main() {
@@ -754,10 +748,10 @@ public class Render {
 
 In the `Main` class, we just remove the sound code. At the end you will be able to see something like this:
 
-![Shadows result](result_shadows.png)
+![Shadows result](<../.gitbook/assets/result_shadows (1).png>)
 
 If you set the `DEBUG_SHADOWS` constant to `1` you will see how the cascade shadows splits
 
-![Shadows result debug](result_shadows_debug.png)
+![Shadows result debug](../.gitbook/assets/result_shadows_debug.png)
 
 [Next chapter](../chapter-18/chapter-18.md)

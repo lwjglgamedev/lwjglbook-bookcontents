@@ -2,9 +2,9 @@
 
 Until this chapter, we have rendered the models by binding their material uniforms, their textures, their vertices and indices buffers and submitting one draw command for each of the meshes they are composed. In this chapter, we will start our way to a more efficient wat of rendering, we will begin the implementation of a bind-less render (at aleast almost bind-less). In this type of rendering we do not invoke a bunch of draw commands to draw the scene, instead we populate a buffer with the instructions that will allow the GPU to render them. This is called indirect rendering and it is a more efficient way of drawing because:
 
-- We remove the need to perform several bind operations before drawing each mesh.
-- We need just to invoke a single draw call.
-- We can perform in-GPU operations, such as frustum culling reducing the load on the CPU side.
+* We remove the need to perform several bind operations before drawing each mesh.
+* We need just to invoke a single draw call.
+* We can perform in-GPU operations, such as frustum culling reducing the load on the CPU side.
 
 As you can see, the ultimate goal is to maximize the utilization of the GPU while removing potential bottlenecks that may occur at the CPU side and latencies due to CPU to GPU communications. In this chapter we will transform our render to use indirect drawing starting with just static models. Animated models will be handled in next chapter.
 
@@ -16,7 +16,7 @@ Prior to explaining the code, let's explain the concepts behind indirect drawing
 
 * `count`: The number of vertices to be drawn (understanding a vertex as the structure which groups the position, normal information, texture coordinates, etc.). This should contain the same values as the number of vertices which we used when invoking the `glDrawElements` when rendering meshes.
 * `instanceCount`: The number of instances to be drawn. We may have several entities that share the same model. Instead of storing a drawing instruction for each entity, we can just submit a single draw instruction but setting the number of entities that we want to draw. This is called instance rendering, and will save a lot of computing time. Without indirect drawing you can achieve the same results by setting specific attributes per VAO. I think that it is even simpler with this technique.
-* `firstIndex`: An offset to the buffer that will hold the indices values used for this draw instructions (the offset is measured in number of indices, not a byte offset). 
+* `firstIndex`: An offset to the buffer that will hold the indices values used for this draw instructions (the offset is measured in number of indices, not a byte offset).
 * `baseVertex`: An offset to the buffer that will hold the vertices data (the offset is measured on number of vertices, not a byte offset).
 * `baseInstance`: We can use this parameter to set a value that will be shared by all the instances to be drawn. Combining this value with the number of the instance to be drawn we will be able to access per instance data (we will see this later on).
 
@@ -34,7 +34,7 @@ For textures we will use an array of textures which should not be confused with 
 
 The following picture depicts the buffers and structures involved in indirect drawing (keep in mind that this is only valid while rendering static models. We will see the new structures that we need to use when rendering animated models in the next chapter).
 
-![Indirect drawing](indirect-drawing.svg)
+![Indirect drawing](../.gitbook/assets/indirect-drawing.svg)
 
 Please keep in mind that we will use arrays of uniforms for per entity-data, materials and model matrices (at the end an array is a buffer, but we will be able to access the dat in handy way by using uniforms).
 
@@ -55,7 +55,7 @@ public class Window {
 }
 ```
 
-The next step is to modify the code to load all the meshes into a single buffer, but, prior to that, wew ill modify the class hierarchy that stores models, materials and meshes. Up to now, models have a set of associated materials which have a set of meshes. This class hierarchy was set to optimize the draw calls, where we first iterated over models, then over materials and finally over meshes. We will change this structure, not storing meshes under materials any more. Instead, meshes will ve stored directly under the models. We will store materials in a sort of cache, and will have a reference to a key in that cache for the meshes. In addition to that, previously, we created a `Mesh` instance for each of the model meshes, which in essence contained a VAO and the associated VBOs for the mesh data. Since we will be using a single buffer for all the meshes, we will just need a single VAO, ans its associated VBOs, for the whole set of meshes of the scene. Therefore, instead of storing a list of `Mesh`  instances under the `Model` class, we will store the data that will be used to construct the draw parameters, such as the offset on the vertices buffer, the offset for the indices buffer, etc. Let's examine the changes one by one.
+The next step is to modify the code to load all the meshes into a single buffer, but, prior to that, wew ill modify the class hierarchy that stores models, materials and meshes. Up to now, models have a set of associated materials which have a set of meshes. This class hierarchy was set to optimize the draw calls, where we first iterated over models, then over materials and finally over meshes. We will change this structure, not storing meshes under materials any more. Instead, meshes will ve stored directly under the models. We will store materials in a sort of cache, and will have a reference to a key in that cache for the meshes. In addition to that, previously, we created a `Mesh` instance for each of the model meshes, which in essence contained a VAO and the associated VBOs for the mesh data. Since we will be using a single buffer for all the meshes, we will just need a single VAO, ans its associated VBOs, for the whole set of meshes of the scene. Therefore, instead of storing a list of `Mesh` instances under the `Model` class, we will store the data that will be used to construct the draw parameters, such as the offset on the vertices buffer, the offset for the indices buffer, etc. Let's examine the changes one by one.
 
 We will start with the `MaterialCache` class, which is defined like this:
 
@@ -127,7 +127,7 @@ As it has been explained before, we need to change the `Model` class to remove r
 * A list `MeshData` instances (a new class), which will hold the meshes data read using Assimp.
 * A list of `RenderBuffers.MeshDrawData` instances (also a new class), that will contained the information needed for indirect drawing (mainly offsets information associated to the data buffers explained above).
 
-We will first populate the list of `MeshData` instances, when loading the models with assimp, and after that we will construct the global buffers that will hold the data, populating the `RenderBuffers.MeshDrawData` instances. After that, we can remove the references to  `MeshData` instances. This is not a very elegant solution, but it is simple enough to explain the concepts without introducing more complexity using pre and post loading hierarchies. The changes in the `Model` class are as follows:
+We will first populate the list of `MeshData` instances, when loading the models with assimp, and after that we will construct the global buffers that will hold the data, populating the `RenderBuffers.MeshDrawData` instances. After that, we can remove the references to `MeshData` instances. This is not a very elegant solution, but it is simple enough to explain the concepts without introducing more complexity using pre and post loading hierarchies. The changes in the `Model` class are as follows:
 
 ```java
 public class Model {
@@ -162,6 +162,7 @@ public class Model {
 ```
 
 The definition of the `MeshData` class is very simple. It just stores, vertices positions, texture coordinates, etc:
+
 ```java
 package org.lwjglb.engine.graph;
 
@@ -376,6 +377,7 @@ public class RenderBuffers {
 ```
 
 This class defines two methods to load models:
+
 * `loadAnimatedModels` for animated models. This will not be implemented in this chapter.
 * `loadStaticModels`for models with no animations.
 
@@ -464,7 +466,7 @@ public class RenderBuffers {
 }
 ```
 
-It basically stores the size of the mesh in bytes (`sizeInBytes`), the material index to which it is associated, the offset in the buffer that holds the vertices information and the vertices, the number of indices for this mesh. The offset is measured in "rows" You can  think that the portion of the mesh that holds positions, normals and texture coordinates as a single "row". This "row" holds all the information associated to a single vertex and will processed in teh vertex shader. This is why we just dive by three the number of position elements, each "row" will have three position elements, and the number of "rows" in the positions data will match the number of "Rows" in the normals data and so on.
+It basically stores the size of the mesh in bytes (`sizeInBytes`), the material index to which it is associated, the offset in the buffer that holds the vertices information and the vertices, the number of indices for this mesh. The offset is measured in "rows" You can think that the portion of the mesh that holds positions, normals and texture coordinates as a single "row". This "row" holds all the information associated to a single vertex and will processed in teh vertex shader. This is why we just dive by three the number of position elements, each "row" will have three position elements, and the number of "rows" in the positions data will match the number of "Rows" in the normals data and so on.
 
 The `populateMeshBuffer` is defined like this:
 
@@ -600,7 +602,7 @@ void main()
 }
 ```
 
-The key here is to get the proper index to access the `drawElements` size. We use the `gl_BaseInstance` and `gl_InstanceID` built-in in variables. When recording the instructions for indirect drawing we will use the `baseInstance` attribute. The value for that attribute will be the one associated to `gl_BaseInstance` built-in in variable. The `gl_InstanceID` will start at `0` whenever we change form a mesh to another, and will be increased for of of the instances of the entities associated to the models. Therefore, by combining this two variables we will be able to access the per-entity specific information in the `drawElements` array.  Once we have the proper index, we just transform positions and normal information as in previous versions of the shader.
+The key here is to get the proper index to access the `drawElements` size. We use the `gl_BaseInstance` and `gl_InstanceID` built-in in variables. When recording the instructions for indirect drawing we will use the `baseInstance` attribute. The value for that attribute will be the one associated to `gl_BaseInstance` built-in in variable. The `gl_InstanceID` will start at `0` whenever we change form a mesh to another, and will be increased for of of the instances of the entities associated to the models. Therefore, by combining this two variables we will be able to access the per-entity specific information in the `drawElements` array. Once we have the proper index, we just transform positions and normal information as in previous versions of the shader.
 
 The scene fragment shader (`scene.frag`) is defined like this:
 
@@ -663,7 +665,6 @@ void main() {
 ```
 
 The main changes are related to the way we access material information and textures. We will now have an array of materials information, which will be accessed by the index we calculated in the vertex shader which is now in the `outMaterialIdx` input variable (which has the `flat` modifier which states that this value should not be interpolated from vertex to fragment stage). We will be using an array of textures to access either regular textures or normal maps. The index to those textures are stored now in the `Material` struct. Since we will be accessing the array of samplers using non constant expressions we need to upgrade GLSL version to 400 (that feature is only available since OpenGL 4.0)
-
 
 Now it is the turn to examine the changes in the `SceneRender` class. We will start by defining a set of constants that will be used in the code, one handle for the buffer that will have the indirect drawing instructions (`staticRenderBufferHandle`) and the number of drawing commands (`staticDrawCount`). We will need also to modify the `createUniforms` method according to the changes in the shaders shown before:
 
@@ -787,6 +788,7 @@ public class SceneRender {
 You can see that we now have to bind the array of texture samplers and activate all the texture units. In addition to that, we iterate over the entities and set up the uniform values for the model matrices. The next step is to setup the `drawElements` array uniform withe the proper values for each of the entities that will point to the index of the model matrix and the material index. After that, we call the `glMultiDrawElementsIndirect` function to perform the indirect drawing. Prior to that, we need to bind the buffers that hold drawing instructions (drawing commands) and the VAO that holds the meshes and indices data. But, when do we populate the buffer for indirect drawing? The answer is that this not need to be performed each render call, if there are no changes in the number of entities, you can record that buffer once, and use it in each render call. In this specific example, we will just populate that buffer at start-up. This means, that, if you want to make changes in the number of entities, you would nee to re-create that buffer again (you should do that for your own engine).
 
 The method that actually builds the indirect draw buffer is called `setupStaticCommandBuffer` which is defined like this:
+
 ```java
 public class SceneRender {
     ...
@@ -887,9 +889,10 @@ public class SceneRender {
 }
 ```
 
-We just check that we are not surpassing the maximum number of supported textures (`MAX_TEXTURES`)  and just create an array of materials information with the information we used in the previous chapters. The only change is that we will need to store the index of the associated texture and normal maps in the material information.
+We just check that we are not surpassing the maximum number of supported textures (`MAX_TEXTURES`) and just create an array of materials information with the information we used in the previous chapters. The only change is that we will need to store the index of the associated texture and normal maps in the material information.
 
 We need another method to update the entities indices map:
+
 ```java
 public class SceneRender {
     ...
@@ -1053,6 +1056,7 @@ public class ShadowRender {
     ...
 }
 ```
+
 Finally, we need a similar method to set up the indirect draw buffer and the entities map:
 
 ```java
@@ -1325,7 +1329,6 @@ public class Main implements IAppLogic {
 
 With all of that changes implemented you should be able to see something similar to this.
 
-![Screen shot](screenshot.png)
-
+![Screen shot](../.gitbook/assets/screenshot.png)
 
 [Next chapter](../chapter-21/chapter-21.md)

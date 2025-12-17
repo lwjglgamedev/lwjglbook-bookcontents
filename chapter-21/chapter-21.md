@@ -46,6 +46,7 @@ public class Model {
 ```
 
 The fact that we pass from a record to a regular inner class, changing the way we access `Model` class attributes requires a slight modification in the `ModelLoader` class:
+
 ```java
 public class ModelLoader {
     ...
@@ -104,6 +105,7 @@ public class RenderBuffers {
 The `animVaoId` will store the VAO which will define the data which will contain the transformed animation vertices, that is, the data after it has been processed by the compute shader (remember one chunk per mesh and entity). The data itself will be stored in a buffer, whose handle will be stored in `destAnimationBuffer`. We need to access that buffer in the compute shader which doe snot understand VAOs, just buffers. We will need also to store bone matrices and indices and weights into two buffers represented by `bonesMatricesBuffer` and `bonesIndicesWeightsBuffer` respectively. In the `cleanup` method we must not forget to clean the new VAO. We also need to add getters for the new attributes.
 
 We can now implement the `loadAnimatedModels` which starts like this:
+
 ```java
 public class RenderBuffers {
     ...
@@ -190,11 +192,12 @@ public class RenderBuffers {
 ```
 
 We will see later on how the following methods are defined but, by now:
+
 * `loadBindingPoses`: Stores binding pose information for all the meshes associated to animated model.
 * `loadBonesMatricesBuffer` : Stores the bone matrices for each animation of the animated models.
 * `loadBonesIndicesWeights`: Stores the bones indices and weights information of the animated models.
 
-The code is very similar to the `loadStaticModels`, we start by creating a VAO for animated models, and then iterate over the meshes of the models. We will use a single buffer to hold all the data, so we just iterate over those elements to get the final buffer size. Please note that the first loop is a little bit different than the static version. We need to iterate over the entities associated to a model, and for each  of them we calculate the size of all the associated meshes.
+The code is very similar to the `loadStaticModels`, we start by creating a VAO for animated models, and then iterate over the meshes of the models. We will use a single buffer to hold all the data, so we just iterate over those elements to get the final buffer size. Please note that the first loop is a little bit different than the static version. We need to iterate over the entities associated to a model, and for each of them we calculate the size of all the associated meshes.
 
 Let's examine the `loadBindingPoses` method:
 
@@ -229,7 +232,7 @@ public class RenderBuffers {
 }
 ```
 
-The `loadBindingPoses` iterates over all the animated models, getting the total size to accommodate all the associated meshes. With that size, a buffer is created and populated using the `populateMeshBuffer` which was already present in the chapter before. Therefore, we store binding pose vertices for all the meshes of the animated models into a single buffer. We will access this buffer in the compute shader, so you can see that we use the `GL_SHADER_STORAGE_BUFFER` flag when binding. 
+The `loadBindingPoses` iterates over all the animated models, getting the total size to accommodate all the associated meshes. With that size, a buffer is created and populated using the `populateMeshBuffer` which was already present in the chapter before. Therefore, we store binding pose vertices for all the meshes of the animated models into a single buffer. We will access this buffer in the compute shader, so you can see that we use the `GL_SHADER_STORAGE_BUFFER` flag when binding.
 
 The `loadBonesMatricesBuffer` method is defined like this:
 
@@ -329,7 +332,7 @@ As in the previous methods, we will store the weights and bone indices informati
 
 ## Compute shaders
 
-It is turn now to implement animation transformations through compute shaders. As it has been said before, a  shader is like any other shader but it does not compose any restrictions on its inputs and its outputs. We will use them to transform data, they will have access to the global buffers that hold information about binding poses and animation transformation matrices and it will dump the result into another buffer. The shader code for animations (`anim.comp`) is defined like this:
+It is turn now to implement animation transformations through compute shaders. As it has been said before, a shader is like any other shader but it does not compose any restrictions on its inputs and its outputs. We will use them to transform data, they will have access to the global buffers that hold information about binding poses and animation transformation matrices and it will dump the result into another buffer. The shader code for animations (`anim.comp`) is defined like this:
 
 ```glsl
 #version 460
@@ -430,6 +433,7 @@ void main()
 ```
 
 As you can see the code is very similar to the one used in previous chapters for animation (unrolling the loops). You wil notice that we need to apply an offset for each mesh, since the data is now stored in a common buffer. In order to support push constants in the compute shader. The input / output data is defined as a set of buffers:
+
 * `srcVector`: this buffer will contain vertices information (positions, normals, etc.).
 * `weightsVector`: this buffer will contain the weights for the current animation state for a specific mesh and entity.
 * `bonesMatrices`: the same but with bones matrices information.
@@ -754,4 +758,4 @@ public class Main implements IAppLogic {
 
 With all of that changes implemented you should be able to see something similar to this.
 
-![Screen shot](screenshot.png)
+![Screen shot](<../.gitbook/assets/screenshot (2).png>)

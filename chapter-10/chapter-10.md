@@ -1,4 +1,4 @@
-# Chapter 10 - GUI drawing with Imgui
+# Chapter 10 - GUI (Imgui)
 
 [Dear ImGui](https://github.com/ocornut/imgui) is a user interface library which can use several backends such as OpenGL and Vulkan. We will use it to display gui controls or to develop HUDs. It provides multiple widgets and the look and fell is easily customizable.
 
@@ -115,6 +115,7 @@ public class Scene {
 ```
 
 The next step will be to create a new class to render our GUI, which will be named `GuiRender` and starts like this:
+
 ```java
 package org.lwjglb.engine.graph;
 
@@ -200,6 +201,7 @@ public class GuiRender {
 ```
 
 The `setupKeyCallBack` method is required to properly process key events in Imgui and is defined like this:
+
 ```java
 public class GuiRender {
     ...
@@ -340,6 +342,7 @@ public class GuiRender {
     ...
 }
 ```
+
 First we need to setup a GLFW key callback which first calls `Window` key call back to handle key events and translate GFLW key code sto Imgui ones. When setting a callback we obtain a reference to a previously established one so we can chain them. In this case we will invoke it if the key event is not handled by ImGui. We are not using char callbacks in other parts of the code, but if you do, remember to apply that chain schema also. After that, we set up the state of Imgui according to key pressed or released events. Finally, we need to setup a char call back so text input widgets can process those events.
 
 Let's view the `render` method now:
@@ -397,7 +400,7 @@ public class GuiRender {
 }
 ```
 
-The first thing that we do is to check if we have set up an implementation of the `IGuiInstance` interface. If there is no instance, we just return, there is no need to render anything. After that we call the `drawGui` method. That is, in each render call we invoke that method so the Imgui can update its status to be able to generate the proper vertex data. After binding the shader we first enable blending which will allow us to use transparencies. Just by enabling blending, transparencies still will not show up. We need also to instruct OpenGL about how the blending will be applied. This is done through the `glBlendFunc` function. You can check an excellent explanation about the details of the different functions that can be applied [here]( https://learnopengl.com/Advanced-OpenGL/Blending).
+The first thing that we do is to check if we have set up an implementation of the `IGuiInstance` interface. If there is no instance, we just return, there is no need to render anything. After that we call the `drawGui` method. That is, in each render call we invoke that method so the Imgui can update its status to be able to generate the proper vertex data. After binding the shader we first enable blending which will allow us to use transparencies. Just by enabling blending, transparencies still will not show up. We need also to instruct OpenGL about how the blending will be applied. This is done through the `glBlendFunc` function. You can check an excellent explanation about the details of the different functions that can be applied [here](https://learnopengl.com/Advanced-OpenGL/Blending).
 
 After that, we need to disable depth testing and face culling for Imgui to work properly. Then, we bind the gui mesh which defines the structure of the data and bind the data and indices buffers. Imgui uses screen coordinates to generate the vertices data, that is `x` values cover the `[0, screen width]` range and `y` values cover the `[0, screen height]`. We will use the `scale` uniform to map from that coordinate system to the `[-1, 1]` range of OpenGL's clip space.
 
@@ -465,6 +468,7 @@ void main()
     outColor = frgColor  * texture(txtSampler, frgTextCoords);
 }
 ```
+
 ## Putting it up all together
 
 Now we need to glue all the previous pices to render the GUI. We will first start by using the new `GuiRender` class into the `Render` one.
@@ -587,6 +591,6 @@ In the `drawGui` method we just setup a new frame, the window position and just 
 
 With all those changes you will be able to see Imgui demo window overlapping the rotating cube. You can interact with the different methods and panels to get a glimpse of the capabilities of Imgui.
 
-![Demo window](demo.png)
+![Demo window](../.gitbook/assets/demo.png)
 
 [Next chapter](../chapter-11/chapter-11.md)

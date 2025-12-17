@@ -1,8 +1,8 @@
 # Chapter 19 - Deferred Shading
 
-Up to now the way that we are rendering a 3D scene is called forward rendering. We first render the 3D objects and apply the texture and lighting effects in a fragment shader. This method is not very efficient if we have a complex fragment shader pass with many lights and complex effects. In addition to that we may end up applying these effects to fragments that may be later on discarded due to depth testing \(although this is not exactly true if we enable [early fragment testing](https://www.khronos.org/opengl/wiki/Early_Fragment_Test)\).
+Up to now the way that we are rendering a 3D scene is called forward rendering. We first render the 3D objects and apply the texture and lighting effects in a fragment shader. This method is not very efficient if we have a complex fragment shader pass with many lights and complex effects. In addition to that we may end up applying these effects to fragments that may be later on discarded due to depth testing (although this is not exactly true if we enable [early fragment testing](https://www.khronos.org/opengl/wiki/Early_Fragment_Test)).
 
-In order to alleviate the problems described above we may change the way that we render the scene by using a technical called deferred shading. With deferred shading we first render the geometry information that is required in later stages \(in the fragment shader\) to a buffer. The complex calculus required by the fragment shader are postponed, deferred, to a later stage when using the information stored in those buffers.
+In order to alleviate the problems described above we may change the way that we render the scene by using a technical called deferred shading. With deferred shading we first render the geometry information that is required in later stages (in the fragment shader) to a buffer. The complex calculus required by the fragment shader are postponed, deferred, to a later stage when using the information stored in those buffers.
 
 You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-19).
 
@@ -13,7 +13,7 @@ Deferred requires to perform two rendering passes. The first one, is the geometr
 * Depth value.
 * The diffuse colors and reflectance factor for each position.
 * The specular component for each position.
-* The normals at each position \(also in light view coordinate system\).
+* The normals at each position (also in light view coordinate system).
 
 All that information is stored in a buffer called G-Buffer.
 
@@ -97,16 +97,16 @@ public class GBuffer {
 }
 ```
 
-The first thing that we do is create a frame buffer. Remember that a frame buffer is just an OpenGL objects that can be used to render operations instead of rendering to the screen. Then we generate a set of textures \(4 textures\), that will be associated to the frame buffer.
+The first thing that we do is create a frame buffer. Remember that a frame buffer is just an OpenGL objects that can be used to render operations instead of rendering to the screen. Then we generate a set of textures (4 textures), that will be associated to the frame buffer.
 
 After that, we use a for loop to initialize the textures. We have the following types:
 
 * “Regular textures”, that will store positions, normals, the diffuse component, etc.
 * A texture for storing the depth buffer. This will be our last texture.
 
-Once the texture has been initialized, we enable sampling for them and attach them to the frame buffer. Each texture is attached using an identifier which starts at `GL_COLOR_ATTACHMENT0`. Each texture increments by one that id, so the positions are attached using `GL_COLOR_ATTACHMENT0`, the diffuse component uses `GL_COLOR_ATTACHMENT1` \(which is `GL_COLOR_ATTACHMENT0 + 1`\), and so on.
+Once the texture has been initialized, we enable sampling for them and attach them to the frame buffer. Each texture is attached using an identifier which starts at `GL_COLOR_ATTACHMENT0`. Each texture increments by one that id, so the positions are attached using `GL_COLOR_ATTACHMENT0`, the diffuse component uses `GL_COLOR_ATTACHMENT1` (which is `GL_COLOR_ATTACHMENT0 + 1`), and so on.
 
-After all the textures have been created, we need to enable them to be used by the fragment shader for rendering. This is done with the `glDrawBuffers` call. We just pass the array with the identifiers of the color attachments used \(`GL_COLOR_ATTACHMENT0` to `GL_COLOR_ATTACHMENT5`\).
+After all the textures have been created, we need to enable them to be used by the fragment shader for rendering. This is done with the `glDrawBuffers` call. We just pass the array with the identifiers of the color attachments used (`GL_COLOR_ATTACHMENT0` to `GL_COLOR_ATTACHMENT5`).
 
 The rest of the class are just getter methods and the cleanup one.
 
@@ -313,25 +313,25 @@ layout (location = 2) out vec4 buffSpecular;
 ...
 ```
 
-This is where we are referring to the textures that this fragment shader will write to. As you can see we just dump  the diffuse color \(which can be the color of the associated texture of a component of the material\), the specular component, the normal, and the depth values for the shadow map. You may notice that we do not store the position in the textures, this is because we can reconstruct fragment position using depth values. We will sww how this can be done in the lighting pass.
+This is where we are referring to the textures that this fragment shader will write to. As you can see we just dump the diffuse color (which can be the color of the associated texture of a component of the material), the specular component, the normal, and the depth values for the shadow map. You may notice that we do not store the position in the textures, this is because we can reconstruct fragment position using depth values. We will sww how this can be done in the lighting pass.
 
 SIDE NOTE: We have simplified the `Material` class definition removing the ambient color component.
 
-If you debug the sample execution with an OpenGL debugger \(such as RenderDoc\), you can view the textures generated during the geometry pass. The albedo texture will look like this:
+If you debug the sample execution with an OpenGL debugger (such as RenderDoc), you can view the textures generated during the geometry pass. The albedo texture will look like this:
 
-![Albedo texture](buffAlbedo_texture.png)
+![Albedo texture](../.gitbook/assets/buffAlbedo_texture.png)
 
 The texture that holds the values for the normals will look like this:
 
-![Normals texture](buffNormal_texture.png)
+![Normals texture](../.gitbook/assets/buffNormal_texture.png)
 
 The texture that holds the values for the specular colors will look like this:
 
-![Specular texture](buffSpecular_texture.png)
+![Specular texture](../.gitbook/assets/buffSpecular_texture.png)
 
 And finally, the depth texture will look like this:
 
-![Depth texture](depth_texture.png)
+![Depth texture](../.gitbook/assets/depth_texture.png)
 
 ## Lighting pass
 
@@ -377,7 +377,6 @@ public class LightsRender {
 ```
 
 You can see that, in addition to create a new shader program, we define a new attribute of the `QadMesh` class (which has not been defined yet). Before analyzing the render method, let’s think a little bit about how we will render the lights. We need to use the contents of the G-Buffer, but in order to use them, we need to first render something. But, we have already drawn the scene, what are we going to render. now? The answer is simple, we just need to render a quad that fills all the screen. For each fragment of that quad, we will use the data contained in the G-Buffer and generate the correct output color. This where the `QuadMesh` class comes to play, it just defines a quad which will be used to render in the lighting pass and is defined like this:
-
 
 ```java
 package org.lwjglb.engine.graph;
@@ -815,7 +814,7 @@ uniform sampler2D specularSampler;
 uniform sampler2D depthSampler;
 ```
 
-We first sample the albedo, normal map (converting from [0, -1] to [-1, 1] range) and the specular attachment according to current fragment coordinates. In addition to that there is a code fragment that may look new to y ou. We need the fragment position to perform the light calculations. But, we have no position attachments. This is where the depth attachment and the inverse projection matrix comes into play. With that information we can reconstruct the world position (view space coordinates) without requiring to have another attachment which stores the position. You will see in other tutorials, that they set up a specific attachment for positions, but it is much more efficient to do it this way. Always remember, that, the less memory consumed by the deferred attachments, the better. With all that information we just simply iterate over the lights to calculate the light contribution to the final color.
+We first sample the albedo, normal map (converting from \[0, -1] to \[-1, 1] range) and the specular attachment according to current fragment coordinates. In addition to that there is a code fragment that may look new to y ou. We need the fragment position to perform the light calculations. But, we have no position attachments. This is where the depth attachment and the inverse projection matrix comes into play. With that information we can reconstruct the world position (view space coordinates) without requiring to have another attachment which stores the position. You will see in other tutorials, that they set up a specific attachment for positions, but it is much more efficient to do it this way. Always remember, that, the less memory consumed by the deferred attachments, the better. With all that information we just simply iterate over the lights to calculate the light contribution to the final color.
 
 The rest of the code is quite similar to the one in the fragment shader of the scene render.
 
@@ -874,6 +873,6 @@ public class Render {
 
 At the end you will be able to see something like this:
 
-![Shadows result](result_shadows.png)
+![Shadows result](../.gitbook/assets/result_shadows.png)
 
 [Next chapter](../chapter-20/chapter-20.md)

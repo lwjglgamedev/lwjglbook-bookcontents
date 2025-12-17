@@ -8,7 +8,7 @@ You can find the complete source code for this chapter [here](https://github.com
 
 The following picture depicts the skybox concept.
 
-![Sky Box](skybox.png)
+![Sky Box](<../.gitbook/assets/skybox (1).png>)
 
 The process of creating a sky box can be summarized in the following steps:
 
@@ -83,7 +83,7 @@ void main()
 }
 ```
 
-You can see that we still use the model matrix. Since  we will scale the skybox,  we need the model matrix. You may see some other implementations that increase the size of the cube that models the sky box at start time and do not need to multiply the model and the view matrix. We have chosen this approach because it’s more flexible and it allows us to change the size of the skybox at runtime, but you can easily switch to the other approach if you want.
+You can see that we still use the model matrix. Since we will scale the skybox, we need the model matrix. You may see some other implementations that increase the size of the cube that models the sky box at start time and do not need to multiply the model and the view matrix. We have chosen this approach because it’s more flexible and it allows us to change the size of the skybox at runtime, but you can easily switch to the other approach if you want.
 
 The fragment shader (`skybox.frag`) is also very simple, we just get the color form a texture or from a diffuse color.
 
@@ -204,7 +204,7 @@ public class SkyBoxRender {
 }
 ```
 
-You will see that we are modifying the view matrix prior to loading that data in the associated uniform. Remember that when we move the camera, what we are actually doing is moving the whole world. So if we just multiply the view matrix as it is, the skybox will be displaced when the camera moves. But we do not want this, we want to stick it at the origin coordinates at \(0, 0, 0\). This is achieved by setting to 0 the parts of the view matrix that contain the translation increments \(the `m30`, `m31` and `m32` components\). You may think that you could avoid using the view matrix at all since the sky box must be fixed at the origin. In that case, you would see that the skybox does not rotate with the camera, which is not what we want. We need it to rotate but not translate. To render the skybox, we just set up the uniforms and render the cube associated to the sky box.
+You will see that we are modifying the view matrix prior to loading that data in the associated uniform. Remember that when we move the camera, what we are actually doing is moving the whole world. So if we just multiply the view matrix as it is, the skybox will be displaced when the camera moves. But we do not want this, we want to stick it at the origin coordinates at (0, 0, 0). This is achieved by setting to 0 the parts of the view matrix that contain the translation increments (the `m30`, `m31` and `m32` components). You may think that you could avoid using the view matrix at all since the sky box must be fixed at the origin. In that case, you would see that the skybox does not rotate with the camera, which is not what we want. We need it to rotate but not translate. To render the skybox, we just set up the uniforms and render the cube associated to the sky box.
 
 Finally, we define a `cleanup` method to properly free resources:
 

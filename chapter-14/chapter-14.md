@@ -12,21 +12,21 @@ You can find the complete source code for this chapter [here](https://github.com
 
 Let’s go back to the plain surface example, a plane can be defined by two triangles which form a quad. If you remember from the lighting chapters, the element that models how light reflects are surface normals. In this case, we have a single normal for the whole surface, each fragment of the surface uses the same normal when calculating how light affects them. This is shown in the next figure.
 
-![Surface Normals](surface_normals.png)
+![Surface Normals](<../.gitbook/assets/surface_normals (1).png>)
 
 If we could change the normals for each fragment of the surface we could model surface imperfections to render them in a more realistic way. This is shown in the next figure.
 
-![Fragment Normals](fragment_normals.png)
+![Fragment Normals](<../.gitbook/assets/fragment_normals (1).png>)
 
 The way we are going to achieve this is by loading another texture that stores the normals for the surface. Each pixel of the normal texture will contain the values of the $$x$$, y and $$z$$ coordinates of the normal stored as an RGB value.
 
 Let’s use the following texture to draw a quad.
 
-![Texture](rock.png)
+![Texture](<../.gitbook/assets/rock (1).png>)
 
 An example of a normal map texture for the image above may be the following.
 
-![Normal map texture](rock_normals.png)
+![Normal map texture](<../.gitbook/assets/rock_normals (1).png>)
 
 As you can see, it's as if we had applied a color transformation to the original texture. Each pixel stores normal information using color components. One thing that you will usually see when viewing normal maps is that the dominant colors tend to blue. This is due to the fact that normals point to the positive $$z$$ axis. The $$z$$ component will usually have a much higher value than the $$x$$ and $$y$$ ones for plain surfaces as the normal points out of the surface. Since $$x$$, $$y$$, $$z$$ coordinates are mapped to RGB, the blue component will have also a higher value.
 
@@ -34,7 +34,7 @@ So, to render an object using normal maps we just need an extra texture and use 
 
 ## Implementation
 
-Usually, normal maps are not defined in that way, they usually are defined in the so called tangent space. The tangent space is a coordinate system that is local to each triangle of the model. In that coordinate space the $$z$$ axis always points out of the surface. This is the reason why a normal map is usually bluish, even for complex models with opposing faces. In order to handle tangent space, we need norm,als, tangent and bi-tangent vectors. We already have normal vector, the tangent and bitangent vectors are perpendicular vectors to the normal one. We need these vectors to calculate the `TBN` matrix which will allow us to use data that is in tangent space to the coordinate system we are using in our shaders. 
+Usually, normal maps are not defined in that way, they usually are defined in the so called tangent space. The tangent space is a coordinate system that is local to each triangle of the model. In that coordinate space the $$z$$ axis always points out of the surface. This is the reason why a normal map is usually bluish, even for complex models with opposing faces. In order to handle tangent space, we need norm,als, tangent and bi-tangent vectors. We already have normal vector, the tangent and bitangent vectors are perpendicular vectors to the normal one. We need these vectors to calculate the `TBN` matrix which will allow us to use data that is in tangent space to the coordinate system we are using in our shaders.
 
 You can check a great tutorial on this aspect [here](https://learnopengl.com/Advanced-Lighting/Normal-Mapping)
 
@@ -293,7 +293,7 @@ The `calcNormal` function takes the following parameters:
 * The vertex bitangent.
 * The texture coordinates.
 
-The first thing we do in that function is to calculate the TBN matrix. After that, we get the normal value form the normal map texture and use the TBN Matrix to pass from tangent space to view space. Remember that the colour we get are the normal coordinates, but since they are stored as RGB values they are contained in the range \[0, 1\]. We need to transform them to be in the range \[-1, 1\], so we just multiply by two and subtract 1.
+The first thing we do in that function is to calculate the TBN matrix. After that, we get the normal value form the normal map texture and use the TBN Matrix to pass from tangent space to view space. Remember that the colour we get are the normal coordinates, but since they are stored as RGB values they are contained in the range \[0, 1]. We need to transform them to be in the range \[-1, 1], so we just multiply by two and subtract 1.
 
 Finally, we use that function only if the material defines a normal map texture.
 
@@ -336,6 +336,7 @@ public class SceneRender {
 ```
 
 We need to update the sky box vertex shader because we have new vectors between normal data and texture coordinate:
+
 ```glsl
 #version 330
 
@@ -439,9 +440,8 @@ public class Main implements IAppLogic {
 
 The result is shown in the next figure.
 
-![Normal mapping result](normal_mapping_result.png)
+![Normal mapping result](<../.gitbook/assets/normal_mapping_result (1).png>)
 
 As you can see the quad that has a normal texture applied gives the impression of having more volume. Although it is, in essence, a plain surface like the other quad, you can see how the light reflects.
-
 
 [Next chapter](../chapter-15/chapter-15.md)

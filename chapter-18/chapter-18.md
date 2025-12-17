@@ -6,9 +6,9 @@ You can find the complete source code for this chapter [here](https://github.com
 
 ## Concepts
 
-We will add the capability to select entities by clicking the mouse on the screen. In order to do so, we will cast a ray from the camera position (our origin) using as a direction the point where we have clicked with the mouse (transforming from mouse coordinates to world coordinates). With that ray we will check if it intersects with bounding boxes associate to each entity (that is a cube that encloses the model associated to an entity). 
+We will add the capability to select entities by clicking the mouse on the screen. In order to do so, we will cast a ray from the camera position (our origin) using as a direction the point where we have clicked with the mouse (transforming from mouse coordinates to world coordinates). With that ray we will check if it intersects with bounding boxes associate to each entity (that is a cube that encloses the model associated to an entity).
 
-![Object Picking](object_picking.svg)
+![Object Picking](../.gitbook/assets/object_picking.svg)
 
 We need to implement the follow steps:
 
@@ -20,9 +20,9 @@ We need to implement the follow steps:
 
 ## Code preparation
 
-We will start first by calculating the bounding box for each mesh of the models we load. We will let [assimp](https://github.com/assimp/assimp) do this work for us by adding an additional flag when loading the models: `aiProcess_GenBoundingBoxes`. This flag will automatically calculate  a bounding box for each mex. That box will embed all the meshes and will be axis aligned. You may see the acronym "AABB" used for this, which means Axis Aligned Bounding Box. Why axis aligned boxes ? Because it will simplify intersection calculations a lot. By using that flag, [assimp](https://github.com/assimp/assimp) will perform those calculations which will be available as the corners of the bounding box (with minimum and maximum coordinates). The following figure shows how it would look like for a cube.
+We will start first by calculating the bounding box for each mesh of the models we load. We will let [assimp](https://github.com/assimp/assimp) do this work for us by adding an additional flag when loading the models: `aiProcess_GenBoundingBoxes`. This flag will automatically calculate a bounding box for each mex. That box will embed all the meshes and will be axis aligned. You may see the acronym "AABB" used for this, which means Axis Aligned Bounding Box. Why axis aligned boxes ? Because it will simplify intersection calculations a lot. By using that flag, [assimp](https://github.com/assimp/assimp) will perform those calculations which will be available as the corners of the bounding box (with minimum and maximum coordinates). The following figure shows how it would look like for a cube.
 
-![AABB](aabb.svg)
+![AABB](../.gitbook/assets/aabb.svg)
 
 Once enabled the calculation, we need to retrieve that information when processing the meshes:
 
@@ -256,7 +256,7 @@ So we need just to perform the traverse the inverse path to get from screen coor
 
 The first step is to transform from screen coordinates to normalized device space. The $$(x, y)$$ coordinates in the view port space are in the range $$[0, screen width]$$ $$[0, screen height]$$. The upper left corner of the screen has a coordinate of $$(0, 0)$$. We need to transform that into coordinates in the range $$[-1, 1]$$.
 
-![Screen coordinates to normalized device space](screen_coordinates.png)
+![Screen coordinates to normalized device space](<../.gitbook/assets/screen_coordinates (1).png>)
 
 The maths are simple:
 
@@ -322,15 +322,15 @@ public class Main implements IAppLogic {
 }
 ```
 
-We define a variable named ```closestDistance```. This variable will hold the closest distance. For game items that intersect, the distance from the camera to the intersection point will be calculated, If it’s lower than the value stored in ```closestDistance```, then this item will be the new candidate. We need to translate and scale the bounding box of eah mesh. We cannot use the model matrix a sit is as it will take into consideration also the rotation (we do not want that since we want the box to be axis aligned). This is why we just apply translation and scaling using entity's data to construct a model matrix.  But, how do we calculate the intersection? This is where the glorious [JOML](https://github.com/JOML-CI/JOML "JOML") library comes to the rescue. We are using [JOML](https://github.com/JOML-CI/JOML "JOML")’s ```Intersectionf``` class, which provides several methods to calculate intersections in 2D and 3D. Specifically, we are using the ```intersectRayAab``` method.
+We define a variable named `closestDistance`. This variable will hold the closest distance. For game items that intersect, the distance from the camera to the intersection point will be calculated, If it’s lower than the value stored in `closestDistance`, then this item will be the new candidate. We need to translate and scale the bounding box of eah mesh. We cannot use the model matrix a sit is as it will take into consideration also the rotation (we do not want that since we want the box to be axis aligned). This is why we just apply translation and scaling using entity's data to construct a model matrix. But, how do we calculate the intersection? This is where the glorious [JOML](https://github.com/JOML-CI/JOML) library comes to the rescue. We are using [JOML](https://github.com/JOML-CI/JOML)’s `Intersectionf` class, which provides several methods to calculate intersections in 2D and 3D. Specifically, we are using the `intersectRayAab` method.
 
-This method implements the algorithm that test intersection for Axis Aligned Boxes. You can check the details, as pointed out in the JOML documentation, [here](http://people.csail.mit.edu/amy/papers/box-jgt.pdf "here").
+This method implements the algorithm that test intersection for Axis Aligned Boxes. You can check the details, as pointed out in the JOML documentation, [here](http://people.csail.mit.edu/amy/papers/box-jgt.pdf).
 
-The method tests if a ray, defined by an origin and a direction, intersects a box, defined by minimum and maximum corner. As it has been said beforeThis algorithm is valid, because our cubes, are aligned with the axis, if they were rotated, this method would not work. In addition to that, when having animations you may need to have different bounding boxes per animation frame (assimp calculates the bounding box for the binding pose). The ```intersectRayAab``` method receives the following parameters:
+The method tests if a ray, defined by an origin and a direction, intersects a box, defined by minimum and maximum corner. As it has been said beforeThis algorithm is valid, because our cubes, are aligned with the axis, if they were rotated, this method would not work. In addition to that, when having animations you may need to have different bounding boxes per animation frame (assimp calculates the bounding box for the binding pose). The `intersectRayAab` method receives the following parameters:
 
 * An origin: In our case, this will be our camera position.
 * A direction: This is the ray that points to the mouse coordinates (world space).
-* The minimum corner of the box. 
+* The minimum corner of the box.
 * The maximum corner. Self explanatory.
 * A result vector. This will contain the near and far distances of the intersection points.
 
@@ -385,6 +385,6 @@ public class Main implements IAppLogic {
 
 You will be able to see how cubes are rendered in blue when licked with the mouse:
 
-![Selected cube](./screenshot.png)
+![Selected cube](<../.gitbook/assets/screenshot (3).png>)
 
 [Next chapter](../chapter-19/chapter-19.md)

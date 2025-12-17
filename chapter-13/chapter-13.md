@@ -35,7 +35,7 @@ $$\displaystyle fogFactor = \frac{(fogFinish - distance)}{(fogFinish - fogStart)
 
 For objects at distance lower than $$fogStart$$ we just simply set the $$fogFactor$$ to $$1$$. The following graph shows how the $$fogFactor$$ changes with the distance.
 
-![Linear model](linear_model.png)
+![Linear model](<../.gitbook/assets/linear_model (1).png>)
 
 The linear model is easy to calculate but it is not very realistic and it does not take into consideration the fog density. In reality, fog tends to grow in a smoother way. So the next suitable model is an exponential one. The equation for that model is as follows:
 
@@ -46,11 +46,11 @@ The new variables that come into play are:
 * $$fogDensity$$ which models the thickness or density of the fog.
 * $$exponent$$ which is used to control how fast the fog increases with distance.
 
-The following picture shows two graphs for the equation above for different values of the exponent \($$2$$ for the blue line and $$4$$ for the red one\).
+The following picture shows two graphs for the equation above for different values of the exponent ($$2$$ for the blue line and $$4$$ for the red one).
 
-![Exponential model](exponential_model.png)
+![Exponential model](<../.gitbook/assets/exponential_model (1).png>)
 
-In our code, we will use a formula that sets a value of two for the exponent \(you can easily modify the example to use different values\).
+In our code, we will use a formula that sets a value of two for the exponent (you can easily modify the example to use different values).
 
 ## Implementation
 
@@ -75,7 +75,7 @@ uniform Fog fog;
 ...
 ```
 
- We will create a function named `calcFog` which is defined as this.
+We will create a function named `calcFog` which is defined as this.
 
 ```glsl
 ...
@@ -91,7 +91,7 @@ vec4 calcFog(vec3 pos, vec4 color, Fog fog, vec3 ambientLight, DirLight dirLight
 ...
 ```
 
-As you can see, we first calculate the distance to the vertex. The vertex coordinates are defined in the `pos` variable and we just need to calculate the length. Then we calculate the fog factor using the exponential model with an exponent of two \(which is equivalent to multiply it twice\). We clamp the `fogFactor` to a range between $$0$$ and $$1$$ and use the `mix` function. In GLSL, the `mix` function is used to blend the fog color and the fragment color \(defined by variable `color`\). It's equivalent to applying this equation:
+As you can see, we first calculate the distance to the vertex. The vertex coordinates are defined in the `pos` variable and we just need to calculate the length. Then we calculate the fog factor using the exponential model with an exponent of two (which is equivalent to multiply it twice). We clamp the `fogFactor` to a range between $$0$$ and $$1$$ and use the `mix` function. In GLSL, the `mix` function is used to blend the fog color and the fragment color (defined by variable `color`). It's equivalent to applying this equation:
 
 $$resultColor = (1 - fogFactor) \cdot fog.color + fogFactor \cdot color$$
 
@@ -107,7 +107,7 @@ At the end of the fragment shader, after applying all the light effects, we just
 ...
 ```
 
-We will create also a new class named `Fog` which is another POJO \(Plain Old Java Object\) that contains the fog attributes.
+We will create also a new class named `Fog` which is another POJO (Plain Old Java Object) that contains the fog attributes.
 
 ```java
 package org.lwjglb.engine.scene;
@@ -268,6 +268,6 @@ One important thing to highlight is that we must choose wisely the fog color. Th
 
 You should be able to see something like this:
 
-![Fog](fog.png)
+![Fog](../.gitbook/assets/fog.png)
 
 [Next chapter](../chapter-14/chapter-14.md)

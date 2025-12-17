@@ -1,4 +1,4 @@
-# Chapter 15 - Animation
+# Chapter 15 - Animations
 
 Until now we have only loaded static 3D models, but in this chapter we will learn how to animate them. When thinking about animations the first approach is to create different meshes for each model positions, load them up into the GPU and draw them sequentially to create the illusion of movement. Although this approach is perfect for some games, it's not very efficient in terms of memory consumption. This where skeletal animation comes to play. We will learn how to load these models using [assimp](https://github.com/assimp/assimp).
 
@@ -52,11 +52,10 @@ In skeletal animation the way a model animates is defined by its underlying skel
 
 Bones do not need to represent a physical bone or articulation: they are artifacts that allow the creatives to model an animation. In addition to bones we still have vertices, the points that define the triangles that compose a 3D model. But in skeletal animation, vertices are drawn based on the position of the bones they relate to.
 
-In this chapter I’ve consulted many different sources, but I  have found two that provide a very good explanation about how to create an animated model. Theses sources can be consulted at:
+In this chapter I’ve consulted many different sources, but I have found two that provide a very good explanation about how to create an animated model. Theses sources can be consulted at:
 
 * [http://www.3dgep.com/gpu-skinning-of-md5-models-in-opengl-and-cg/](http://www.3dgep.com/gpu-skinning-of-md5-models-in-opengl-and-cg/)
 * [http://ogldev.atspace.co.uk/www/tutorial38/tutorial38.html](http://ogldev.atspace.co.uk/www/tutorial38/tutorial38.html)
-
 
 If you load a model which contains animations with current code, you will get what is called the binding pose. You can try that (with code from previous chapter) and you will be able to see the 3D model perfectly. The binding poise defines the positions normals, texture coordinates of the model without being affected by animation at all. An animated model defines in essence the following additional information:
 
@@ -76,30 +75,30 @@ Bones also point to a list of weights. Each weight is defined by the following a
 
 The following picture shows the relationships between all these elements.
 
-![Animation structures](mesh_bones_weights_vertices.png)
+![Animation structures](<../.gitbook/assets/mesh_bones_weights_vertices (1).png>)
 
 Therefore, each vertex, besides containing position, normals and texture coordinates will have now a set of indices (typically four values) of the bones that affect those vertices (`jointIndices`) and a set of weights that will modulate that effect. Each vertex will bve modified according to the transformation matrices associated to each joint in order to calculate final position. Therefore, we will need to augment the VAO associated to each mesh to hold that information as it is shown in the next figure.
 
-![Animation VAO](static_vao_animation_vao.png)
+![Animation VAO](../.gitbook/assets/static_vao_animation_vao.png)
 
 Assimp scene object defines a Node’s hierarchy. Each Node is defined by a name a list of children node. Animations use these nodes to define the transformations that should be applied to. This hierarchy is defined indeed the bones’ hierarchy. Every bone is a node, and has a parent, except the root node, and possible a set of children. There are special nodes that are not bones, they are used to group transformations, and should be handled when calculating the transformations. Another issue is that this Nodes hierarchy is defined from the whole model, we do not have separate hierarchies for each mesh.
 
 A scene also defines a set of animations. A single model can have more than one animation to model how a character walks, runs, etc. Each of these animations define different transformations. An animation has the following attributes:
 
 * A name.
-* A duration. That is, the duration in time of the animation. The name may seem confusing since an animation is the list of transformations that should be applied to each node for each different frame. 
+* A duration. That is, the duration in time of the animation. The name may seem confusing since an animation is the list of transformations that should be applied to each node for each different frame.
 * A list of animation channels. An animation channel contains, for a specific instant in time the translation, rotation and scaling information that should be applied to each node. The class that models the data contained in the animation channels is the `AINodeAnim`. Animation channels could be assimilated as the key frames.
 
 The following figure shows the relationships between all the elements described above.
 
-![Node animations](node_animations.png)
+![Node animations](<../.gitbook/assets/node_animations (1).png>)
 
 For a specific instant of time, for a frame, the transformation to be applied to a bone is the transformation defined in the animation channel for that instant, multiplied by the transformations of all the parent nodes up to the root node. Hence, we need to extract the information stored in the scene, the process is as follows:
 
 * Construct the node hierarchy.
-* For each animation, iterate over each animation channel (for each animation node\) and construct the transformation matrices for each of the bones for all the potential animation frames.  Those transformation matrices are a combination of the transformation matrix of the node associated to the bone and the bone transformation matrices.
+* For each animation, iterate over each animation channel (for each animation node) and construct the transformation matrices for each of the bones for all the potential animation frames. Those transformation matrices are a combination of the transformation matrix of the node associated to the bone and the bone transformation matrices.
 * We start at the root node, and for each frame, build transformation matrix for that node, which is the the transformation matrix of the node multiplied by the composition of the translation, rotation and scale matrix of that specific frame for that node.
-* We then get the bones associated to that node and complement that transformation by multiplying  the offset matrices of the bones. The result will be a transformation matrix associated to the related bones for that specific frame, which will be used in the shaders.
+* We then get the bones associated to that node and complement that transformation by multiplying the offset matrices of the bones. The result will be a transformation matrix associated to the related bones for that specific frame, which will be used in the shaders.
 * After that, we iterate over the children nodes, passing the transformation matrix of the parent node to be used also in combination with the children node transformations.
 
 ## Implementation
@@ -123,7 +122,6 @@ public class ModelLoader {
 ```
 
 We need an extra argument (named `animation`) in the `loadModel` method to indicate if we are loading a model with animations or not. If so, we cannot use the `aiProcess_PreTransformVertices` flag. This flag performs some transformation over the data loaded so the model is placed in the origin and the coordinates are corrected to math OpenGL coordinate System. We cannot use this flag for animated models because it removes animation data information.
-
 
 While processing the meshes we will also process the associated bones and weights for each vertex when we are processing the meshes. While we are processing them, we will store the list of bones so we can later on build the required transformations:
 
@@ -357,7 +355,8 @@ public class ModelLoader {
     ...
 }
 ```
-This method returns a `List` of `Model.Animation` instances. Remember that a model can have more than one animation, so they are stored by their index. For each of these animations we construct a list of animation frames (`Model.AnimatedFrame` instances), which are essentially a list of the transformation matrices to be applied to each of the bones that compose the model. For each of the animations, we calculate the maximum number of frames by calling the method `calcAnimationMaxFrames`, which is defined like this: 
+
+This method returns a `List` of `Model.Animation` instances. Remember that a model can have more than one animation, so they are stored by their index. For each of these animations we construct a list of animation frames (`Model.AnimatedFrame` instances), which are essentially a list of the transformation matrices to be applied to each of the bones that compose the model. For each of the animations, we calculate the maximum number of frames by calling the method `calcAnimationMaxFrames`, which is defined like this:
 
 ```java
 public class ModelLoader {
@@ -797,7 +796,7 @@ void main()
 
 The following figure depicts the process.
 
-![Bones weights](bones_weights.png)
+![Bones weights](../.gitbook/assets/bones_weights.png)
 
 In the `Main` class we need to load animation models and activate anti-aliasing. We will also increment the animation frame each update:
 
@@ -881,8 +880,6 @@ public class SkyBox {
 
 You will be able to see something like this:
 
-
-![Screen shot](screenshot.png)
-
+![Screen shot](<../.gitbook/assets/screenshot (1).png>)
 
 [Next chapter](../chapter-16/chapter-16.md)
