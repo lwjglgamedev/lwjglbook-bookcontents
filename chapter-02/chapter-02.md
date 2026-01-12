@@ -16,7 +16,7 @@ while (keepOnRunning) {
 }
 ```
 
-The `input` method is responsible of handling user input (key strokes, mouse movements, etc.). The `update` method is responsible of updating game state (enemy positions, AI, etc..) and, finally, theSo, is that all? Are we finished with game loops? Well, not yet. The above snippet has many pitfalls. First of all the speed that the game loop runs at will be different depending on the machine it runs on. If the machine is fast enough the user will not even be able to see what is happening in the game. Moreover, that game loop will consume all the machine resources.
+The `input` method is responsible of handling user input (key strokes, mouse movements, etc.). The `update` method is responsible of updating game state (enemy positions, AI, etc.). Finally, the `render` method is responsible for rendering the visuals of the game with OpenGL. So, is that all? Are we finished with game loops? Well, not yet. The above snippet has many pitfalls. First of all the speed that the game loop runs at will be different depending on the machine it runs on. If the machine is fast enough the user will not even be able to see what is happening in the game. Moreover, that game loop will consume all the machine resources.
 
 First of all we may want to control separately the period at which the game state is updated and the period at which the game is rendered to the screen. Why do we do this? Well, updating our game state at a constant rate is more important, especially if we use some physics engine. On the contrary, if our rendering is not done in time it makes no sense to render old frames while processing our game loop. We have the flexibility to skip some frames. 
 
@@ -80,8 +80,8 @@ public class Window {
 
 As you can see, it defines some attributes to store the window handle, its width and height and a callback function which will be invoked nay time the window is resized. It also defines an inner class to set up some options to control window creation:
 
-* `compatibleProfile`: This controls wether we want to use old functions from previous versions (deprecated functions) or not. 
-* `fps`: Defines the target frames per second (FPS). If it has a value equal os less than zero it will mean that we do not want to set up a target but either use monitor refresh that as target FPS. In order to do so, we will use v-sync (that is the number of screen updates to wait from the time `glfwSwapBuffers` was called before swapping the buffers and returning).
+* `compatibleProfile`: This controls whether we want to use old functions from previous versions (deprecated functions) or not. 
+* `fps`: Defines the target frames per second (FPS). If it has a value less than or equal to zero it means that we do not want to set a fixed target FPS but instead use the monitor refresh rate as the target FPS. In order to do so, we will use v-sync (that is the number of screen updates to wait from the time `glfwSwapBuffers` was called before swapping the buffers and returning).
 * `height`: Desired window height.
 * `width`: Desired window width:
 * `ups`: Defines the target number of updates per second (initialized to a default value).
@@ -219,7 +219,7 @@ public class Window {
 }
 ```
 
-The `Scene` class will hold 3D scene future elements (models, etc.). By now it is just an empty place holder:
+The `Scene` class will hold 3D scene future elements (models, etc.). For now it is just an empty placeholder:
 
 ```java
 package org.lwjglb.engine.scene;
@@ -235,7 +235,7 @@ public class Scene {
 }
 ```
 
-The `Render` class is just now another place holder that just clears the screen:
+The `Render` class is just another placeholder that clears the screen:
 
 ```java
 package org.lwjglb.engine.graph;
@@ -354,7 +354,7 @@ public class Engine {
 }
 ```
 
-The loop starts by calculating two parameters: `timeU` and `timeR` which control the maximum elapsed time between updates (`timeU`) and render calls (`timeR`) in milliseconds. If those periods are consumed we need either to update game state or to render. In the later case, if the target FPS is set to 0 we will rely on  v-sync refresh rate so we just set tha value to `0`. The loop starts by polling the events over the window, after that, we get current time in milliseconds. After that we get the elapsed time between update and render calls. If we have passed the maximum elapsed time for render (or relay in v-sync), we process user input by calling `appLogic.input`. If we have surpassed maximum update elapsed time we update game state by calling `appLogic.update`.  we have passed the maximum elapsed time for render (or relay in v-sync), we trigger render calls by calling `render.render`.
+The loop starts by calculating two parameters: `timeU` and `timeR` which control the maximum elapsed time between updates (`timeU`) and render calls (`timeR`) in milliseconds. If those periods are consumed we need either to update game state or to render. In the later case, if the target FPS is set to 0 we will rely on v-sync refresh rate so we just set the value to `0`. The loop starts by polling the events over the window, after that, we get current time in milliseconds. After that we get the elapsed time between update and render calls. If we have passed the maximum elapsed time for render (or relay in v-sync), we process user input by calling `appLogic.input`. If we have surpassed maximum update elapsed time we update game state by calling `appLogic.update`.  we have passed the maximum elapsed time for render (or relay in v-sync), we trigger render calls by calling `render.render`.
 
 At the end of the loop we call the `cleanup` method to free resources.
 
@@ -374,7 +374,7 @@ public class Engine {
 }
 ```
 
-A little bit note on threading. GLFW requires to be initialized from the main thread. Polling of events should also be done in that thread. Therefore, instead of creating a separate thread for the game loop, which is what you would see commonly in games, we will execute everything from the main thread. This is whey we do not create new `Thread` in the `start` method.
+A little note on threading. GLFW requires to be initialized from the main thread. Polling of events should also be done in that thread. Therefore, instead of creating a separate thread for the game loop, which is what you would see commonly in games, we will execute everything from the main thread. This is why we do not create a new `Thread` in the `start` method.
 
 Finally, we just simplify the `Main` class to this:
 
@@ -415,6 +415,6 @@ public class Main implements IAppLogic {
 }
 ```
 
-We just create the `Engine` instance and start it up in the `main` method. The `Main` class also implements the `IAppLogic` interface which by now is just empty.
+We just create the `Engine` instance and start it up in the `main` method. The `Main` class also implements the `IAppLogic` interface which, for now, is just empty.
 
 [Next chapter](../chapter-03/chapter-03.md)
