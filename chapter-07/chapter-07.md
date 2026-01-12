@@ -6,13 +6,13 @@ You can find the complete source code for this chapter [here](https://github.com
 
 ## Texture loading
 
-A texture is an image which is mapped to a model to set the color of the pixels of the model. You can think of a texture as a skin that is wrapped around your 3D model. What you do is assign points in the image texture to the vertices in your model. With that information OpenGL is able to calculate the color to apply to the other pixels based on the texture image.
+A texture is an image which is mapped to a model to set the color of the pixels of the model. You can think of a texture as a skin that is wrapped around your 3D model. What you do is assign points in the image texture to the vertices in your model. With that information, OpenGL is able to calculate the color to apply to the other pixels based on the texture image.
 
 ![Texture mapping](<../.gitbook/assets/texture_mapping (1).png>)
 
-The texture image does not have to be the same size as the model. It can be larger or smaller. OpenGL will extrapolate the color if the pixel to be processed cannot be mapped to a specific point in the texture. You can control how this process is done when a specific texture is created.
+The texture image can be larger or smaller than the model. OpenGL will extrapolate the color if the pixel to be processed cannot be mapped to a specific point in the texture. You can control this extrapolation when a specific texture is created.
 
-So basically what we must do, in order to apply a texture to a model, is assigning texture coordinates to each of our vertices. The texture coordinate system is a bit different from the coordinate system of our model. First of all, we have a 2D texture so our coordinates will only have two components, x and y. Besides that, the origin is setup in the top left corner of the image and the maximum value of the x or y value is 1.
+In order to apply a texture to a model, we must assign texture coordinates to each of our vertices. The texture coordinate system is a bit different from the coordinate system of our model. First of all, we have a 2D texture so our coordinates will only have two components, x and y. Besides that, the origin is setup in the top left corner of the image and the maximum value of the x or y value is 1.
 
 ![Texture coordinates](<../.gitbook/assets/texture_coordinates (1).png>)
 
@@ -113,9 +113,9 @@ The first thing we do in the constructor is to allocate `IntBuffer`s for the lib
 * `channels`: The image channels.
 * `desired_channels`: The desired image channels. We pass 4 (RGBA).
 
-One important thing to remember is that OpenGL, for historical reasons, requires that texture images have a size (number of texels in each dimension) of a power of two (2, 4, 8, 16, ....). I think this is not required by OpenGL drivers anymore but if you have some issues you can try modifying the dimensions.
+One important thing to remember is that OpenGL, for historical reasons, requires that texture images have a size (number of texels in each dimension) of a power of two (2, 4, 8, 16, ....). I think this is not required by OpenGL drivers anymore but if you have some issues you can try modifying the dimensions. Texels are to textures as pixels are to pictures.
 
-The next step is to upload the texture into the GPU. This will be done in the `generateTexture` method. First of all we need to create a new texture identifier (by calling the `glGenTextures` function). After that we need to bind to that texture (by calling the `glBindTexture`). Then we need to tell OpenGL how to unpack our RGBA bytes. Since each component is one byte in size we just use `GL_UNPACK_ALIGNMENT` for the `glPixelStorei` function. Finally we load the texture data by calling the `glTexImage2D`.
+The next step is to upload the texture into the GPU. This will be done in the `generateTexture` method. First of all, we need to create a new texture identifier (by calling the `glGenTextures` function). After that, we need to bind to that texture (by calling the `glBindTexture`). Then, we need to tell OpenGL how to unpack our RGBA bytes. Since each component is one byte in size, we just use `GL_UNPACK_ALIGNMENT` for the `glPixelStorei` function. Finally, we load the texture data by calling the `glTexImage2D`.
 
 The `glTexImage2D` method has the following parameters:
 
@@ -129,9 +129,9 @@ The `glTexImage2D` method has the following parameters:
 * `type`: Specifies the data type of the pixel data. We are using unsigned bytes for this.
 * `data`: The buffer that stores our data.
 
-After that, by calling the `glTexParameteri` function we basically say that when a pixel is drawn with no direct one to one association to a texture coordinate it will pick the nearest texture coordinate point. After that, we generate a mipmap. A mipmap is a decreasing resolution set of images generated from a high detailed texture. These lower resolution images will be used automatically when our object is scaled. We do this when calling the `glGenerateMipmap` function. And that’s all, we have successfully loaded our texture. Now we need to use it.
+After that, by calling the `glTexParameteri` function, we basically say that when a pixel is drawn with no direct one-to-one association to a texture coordinate, it will pick the nearest texture coordinate point. After that, we generate a mipmap. A mipmap is a decreasing resolution set of images generated from a high detailed texture. These lower resolution images will be used automatically when our object is scaled. We do this when calling the `glGenerateMipmap` function. And that’s all, we have successfully loaded our texture. Now we need to use it.
 
-Now we will create a texture cache. It is very frequent that models reuse the same texture, therefore, instead of loading the same texture multiple times, we will cache the textures already loaded to load each texture just once. This will be controlled by the `TextureCache` class:
+Now we will create a texture cache. It is very frequent that models reuse the same texture; therefore, instead of loading the same texture multiple times, we will cache the textures already loaded to load each texture just once. This will be controlled by the `TextureCache` class:
 
 ```java
 package org.lwjglb.engine.graph;
@@ -170,7 +170,7 @@ public class TextureCache {
 }
 ```
 
-As you can see we just store te loaded textures in a `Map` and return a default texture in case texture path is null (models with no textures). The default texture is just a back image which can be combined with model which do not define textures but colors so we can combine both in the fragment shader. The `TextureCache` class instance will be stored in the `Scene` class:
+As you can see, we just store the loaded textures in a `Map` and return a default texture in case texture path is null (models with no textures). The default texture is just a black image; for models that define colors instead of textures, we can combine both the default texture and the model in the fragment shader. The `TextureCache` class instance will be stored in the `Scene` class:
 
 ```java
 public class Scene {
@@ -189,7 +189,7 @@ public class Scene {
 }
 ```
 
-Now we new to change the way we define models to add support for textures. In order to do so, and to prepare for the more complex models we are going to load in next chapters, we will introduce a new class named `Material`. This class will hold texture path and a list of `Mesh` instances. Therefore, we will associated `Model` instances with a `List` of `Material`'s instead of `Mesh`'es. In next chapters materials will be able to contain other properties, such as diffuse or specular colors.
+Now we need to change the way we define models to add support for textures. In order to do so (and to prepare for the more complex models we are going to load in future chapters), we will introduce a new class named `Material`. This class will hold texture path and a list of `Mesh` instances. Therefore, we will associate `Model` instances with a `List` of `Material`'s instead of `Mesh`'es. In future chapters, materials will be able to contain other properties, such as diffuse or specular colors.
 
 The `Material` class is defined like this:
 
@@ -264,7 +264,7 @@ public class Model {
 }
 ```
 
-As we said before we need to pass texture coordinates as another VBO. So we will modify our `Mesh` class to accept an array of floats that contains texture coordinates instead of colors. The `Mesh` class is modified like this:
+As we said before, we need to pass texture coordinates as another VBO. So we will modify our `Mesh` class to accept an array of floats that contains texture coordinates instead of colors. The `Mesh` class is modified like this:
 
 ```java
 public class Mesh {
@@ -317,7 +317,7 @@ public class Mesh {
 
 ## Using the textures
 
-Now we need to use the texture in our shaders. In the vertex shader we have changed the second input parameter because now it’s a `vec2` (we also changed the parameter name). The vertex shader, as in the color case, just passes the texture coordinates to be used by the fragment shader.
+Now we need to use the texture in our shaders. In the vertex shader, we have changed the second input parameter (previously `outColor`, now `outTexCoord`) from `vec3` to a `vec2`. The vertex shader, as in the color case, just passes the texture coordinates to be used by the fragment shader.
 
 ```glsl
 #version 330
@@ -337,7 +337,7 @@ void main()
 }
 ```
 
-In the fragment shader we must use the texture coordinates in order to set the pixel colors by sampling a texture (through a `sampler2D` uniform)
+In the fragment shader, we must use the texture coordinates in order to set the pixel colors by sampling a texture (through a `sampler2D` uniform)
 
 ```glsl
 #version 330
@@ -406,9 +406,9 @@ public class SceneRender {
 }
 ```
 
-As you can see, we first set the texture sampler uniform to the `0` value. Let's explain why we do this. A graphics card has several spaces or slots to store textures. Each of these spaces is called a texture unit. When we are working with textures we must set the texture unit that we want to work with. In this case we are using just one texture, so we will use the texture unit `0`. The uniform has a `sampler2D` type and will hold the value of the texture unit that we want to work with.. When we iterate over models and materials we get the texture associated to each material from the cache, activate the texture unit by calling the `glActiveTexture` function with the parameter `GL_TEXTURE0` and bind it. This is the way we relate the texture unit and the texture identifier.
+As you can see, we first set the texture sampler uniform to the `0` value. Let's explain why we do this. A graphics card has several spaces or slots to store textures. Each of these spaces is called a texture unit. When we are working with textures we must set the texture unit that we want to work with. In this case, we are using just one texture, so we will use the texture unit `0`. The uniform has a `sampler2D` type and will hold the value of the texture unit that we want to work with. When we iterate over models and materials, we get the texture associated to each material from the cache, activate the texture unit by calling the `glActiveTexture` function with the parameter `GL_TEXTURE0`, and bind the texture unit and texture identifier. 
 
-We need to modify also the `UniformsMap` class to add a new method which accepts an integer to set up the sampler value, which will be called also `setUniform` but accepting the name of the uniform and an integer value. Since we will be repeating some code between the `setUniform` method used to set up matrices and this new one, we will extract the part of the code that retrieves the uniform location to a new method named `getUniformLocation`. The changes in the `UniformsMap` class are shown below:
+We need to modify also the `UniformsMap` class to add a new method which accepts an integer to set up the sampler value. This method will also be called `setUniform` but will instead accept the name of the uniform and an integer value. Since we will be repeating some code between the `setUniform` method used to set up matrices and this new one, we will extract the part of the code that retrieves the uniform location to a new method named `getUniformLocation`. The changes in the `UniformsMap` class are shown below:
 
 ```java
 public class UniformsMap {
@@ -434,7 +434,7 @@ public class UniformsMap {
 }
 ```
 
-Right now, we have just modified our code base to support textures. Now we need to setup texture coordinates for our 3D cube. Our texture image file will be something like this:
+Right now, we have just modified our code base to support textures. Now, we need to setup texture coordinates for our 3D cube. Our texture image file will be something like this:
 
 ![Cube texture](<../.gitbook/assets/cube_texture (1).png>)
 
@@ -460,11 +460,11 @@ Now, let’s define the texture mapping of the top face.
 | V0     | (0.0, 1.0)         |
 | V3     | (0.5, 1.0)         |
 
-As you can see we have a problem, we need to setup different texture coordinates for the same vertices (V0 and V3). How can we solve this? The only way to solve it is to repeat some vertices and associate different texture coordinates. For the top face we need to repeat the four vertices and assign them the correct texture coordinates.
+As you can see, we have a problem. We need to setup different texture coordinates for the same vertices (V0 and V3). How can we solve this? For each time we need to map a new set of texture coordinates to an existing vertex, we must make another vertex with the same set of vertex coordinates. For the top face, we need to repeat the four vertices and assign them the correct texture coordinates.
 
-Since the front, back and lateral faces use the same texture we will not need to repeat all of these vertices. You have the complete definition in the source code, but we needed to move from 8 points to 20.
+Since the front, back, and lateral faces use the same texture, we do not need to repeat all of these vertices. The complete definition of the source code used 20 total vertices compared to the original 8.
 
-In the next chapters we will learn how to load models generated by 3D modeling tools so we won’t need to define by hand the positions and texture coordinates (which by the way, would be impractical for more complex models).
+In the next chapters, we will learn how to load models generated by 3D modeling tools. That way, we won’t need to define by hand the positions and texture coordinates (which by the way, would be impractical for more complex models).
 
 We just need to modify the `init` method in the `Main` class to define the texture coordinates and load texture data:
 
