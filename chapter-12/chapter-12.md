@@ -1,6 +1,6 @@
 # Chapter 12 - Sky Box
 
-In this chapter we will see how to create a sky box. A skybox will allow us to set a background to give the illusion that our 3D world is bigger. That background is wrapped around the camera position and covers the whole space. The technique that we are going to use here is to construct a big cube that will be displayed around the 3D scene, that is, the centre of the camera position will be the centre of the cube. The sides of that cube will be wrapped with a texture with hills, a blue sky and clouds that will be mapped in a way that the image appears to be a continuous landscape.
+In this chapter we will see how to create a sky box. A skybox will allow us to set a background to give the illusion that our 3D world is bigger. That background is wrapped around the camera position and covers the whole space. The technique that we are going to use here is to construct a big cube that will be displayed around the 3D scene, that is, the centre of the camera position will be the centre of the cube. The sides of that cube will be wrapped with a texture with hills, a blue sky and clouds mapped in such a way that the image appears to be a continuous landscape.
 
 You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-12).
 
@@ -61,7 +61,7 @@ public class Scene {
 }
 ```
 
-The next step is to create another set of vertex and fragment shaders for the sky box. But, why not reuse the scene shaders that we already have? The answer is that, actually, the shaders that we will need are a simplified version of those shaders. For example, we will not be applying lights to the sky box. Below you can see the sky box vertex shader (`skybox.vert`).
+The next step is to create another set of vertex and fragment shaders for the sky box. But why not reuse the scene shaders we already have? The answer is that, actually, the shaders that we will need for the skybox are a simplified version of those shaders. For example, we will not be applying lights to the sky box. Below you can see the sky box vertex shader (`skybox.vert`).
 
 ```glsl
 #version 330
@@ -83,9 +83,9 @@ void main()
 }
 ```
 
-You can see that we still use the model matrix. Since we will scale the skybox, we need the model matrix. You may see some other implementations that increase the size of the cube that models the sky box at start time and do not need to multiply the model and the view matrix. We have chosen this approach because it’s more flexible and it allows us to change the size of the skybox at runtime, but you can easily switch to the other approach if you want.
+You can see that we still use the model matrix. Since we will scale the skybox, we need the model matrix. You may see other implementations that increase the size of the cube that models the sky box at start time and do not need to multiply the model and the view matrix. We have chosen this approach because it’s more flexible and it allows us to change the size of the skybox at runtime, but you can easily switch to the other approach if you want.
 
-The fragment shader (`skybox.frag`) is also very simple, we just get the color form a texture or from a diffuse color.
+The fragment shader (`skybox.frag`) is also very simple, we just get the color from a texture or from a diffuse color.
 
 ```glsl
 #version 330
@@ -204,7 +204,7 @@ public class SkyBoxRender {
 }
 ```
 
-You will see that we are modifying the view matrix prior to loading that data in the associated uniform. Remember that when we move the camera, what we are actually doing is moving the whole world. So if we just multiply the view matrix as it is, the skybox will be displaced when the camera moves. But we do not want this, we want to stick it at the origin coordinates at (0, 0, 0). This is achieved by setting to 0 the parts of the view matrix that contain the translation increments (the `m30`, `m31` and `m32` components). You may think that you could avoid using the view matrix at all since the sky box must be fixed at the origin. In that case, you would see that the skybox does not rotate with the camera, which is not what we want. We need it to rotate but not translate. To render the skybox, we just set up the uniforms and render the cube associated to the sky box.
+You will see that we are modifying the view matrix prior to loading that data in the associated uniform. Remember that when we move the camera, what we are actually doing is moving the whole world. So if we just multiply the view matrix as it is, the skybox will be displaced when the camera moves. But we do not want this--we want to stick it at the origin coordinates at (0, 0, 0). This is achieved by setting to 0 the parts of the view matrix that contain the translation increments (the `m30`, `m31` and `m32` components). You may think that you could avoid using the view matrix at all since the sky box must be fixed at the origin. In that case, you would see that the skybox does not rotate with the camera, which is not what we want. We need it to rotate but not translate. To render the skybox, we just set up the uniforms and render the cube associated to the sky box.
 
 Finally, we define a `cleanup` method to properly free resources:
 
@@ -243,7 +243,7 @@ public class Render {
 }
 ```
 
-You can see that we render the sky box first. This is due to the fact that if we have 3D models in the scene with transparencies we want them to be blended with the skybox (not with a black background).
+You can see that we render the sky box first. This is so 3D models with transparencies are blended with the skybox and not a black background.
 
 Finally, in the `Main` class we just set up the sky box in the scene and create a set of tiles to give the illusion of an infinite terrain. We set up a chunk of tiles that move along with the camera position to always be shown.
 
@@ -285,6 +285,7 @@ public class Main implements IAppLogic {
 
         SkyBox skyBox = new SkyBox("resources/models/skybox/skybox.obj", scene.getTextureCache());
         skyBox.getSkyBoxEntity().setScale(50);
+        skybox.getSkyBoxEntity().updateModelMatrix();
         scene.setSkyBox(skyBox);
 
         scene.getCamera().moveUp(0.1f);
