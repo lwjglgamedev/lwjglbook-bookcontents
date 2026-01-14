@@ -85,7 +85,7 @@ As you can see, it relies on the `Matrix4f` class (provided by the JOML library)
 * Distance to the near plane (z-near)
 * Distance to the far plane (z-far).
 
-We will store a `Projection` class instance in the `Scene` class and initialize it in the constructor. IN addition to that, we weill need to take care if the window is resized, so we provide a new method in that `Scene` class, named `resize` to recalculate the perspective projection matrix when window dimensions change.
+We will store a `Projection` class instance in the `Scene` class and initialize it in the constructor. In order to allow for the window to be resized, we will need to create a new method in the `Scene` class, named `resize` to recalculate the perspective projection matrix when window dimensions change.
 
 ```java
 public class Scene {
