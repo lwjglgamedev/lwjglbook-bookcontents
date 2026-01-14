@@ -38,7 +38,7 @@ Usually, normal maps are not defined in that way, they usually are defined in th
 
 You can check a great tutorial on this aspect [here](https://learnopengl.com/Advanced-Lighting/Normal-Mapping)
 
-Therefore, ye first step is to add support for normal mapping loading the `ModelLoader` class, including tangent and bitangent information. If you recall, when setting the model loading flags for assimp, we included this one: `aiProcess_CalcTangentSpace`. This flag allows to automatically calculate tangent and bitangent data.
+Therefore, the first step is to add support for normal mapping loading the `ModelLoader` class, including tangent and bitangent information. If you recall, when setting the model loading flags for assimp, we included this one: `aiProcess_CalcTangentSpace`. This flag allows to automatically calculate tangent and bitangent data.
 
 In the `processMaterial` method we will first query for the presence of a normal map texture. If so, we load that texture and associate that texture path to the material:
 
