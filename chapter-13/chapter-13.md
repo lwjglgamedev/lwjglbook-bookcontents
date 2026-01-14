@@ -218,7 +218,7 @@ public class SceneRender {
 }
 ```
 
-Finally, wew will modify the `Main` class to set up fog and just use a single quad as a terrain scaled to show the effect of fog.
+Finally, we will modify the `Main` class to set up fog and just use a single quad as a terrain scaled to show the effect of fog.
 
 ```java
 public class Main implements IAppLogic {
