@@ -6,7 +6,7 @@ You can find the complete source code for this chapter [here](https://github.com
 
 ## Anti-aliasing support
 
-In this chapter we will add also support for anti-aliasing. Up to this moment yo may have seen saw-like edges in the models. In order to remove those effects, we will apply anti-aliasing which basically uses the values of several samples to construct the final value for each pixel. In our case, we will use four sampled values. We need to set up this as a window hint prior to image creation (and add a new window option to control that):
+In this chapter we will add also support for anti-aliasing. Up to this moment you may have seen saw-like edges in the models. In order to remove those effects, we will apply anti-aliasing which basically uses the values of several samples to construct the final value for each pixel. In our case, we will use four sampled values. We need to set up this as a window hint prior to image creation (and add a new window option to control that):
 
 ```java
 public class Window {
@@ -57,7 +57,7 @@ In this chapter I’ve consulted many different sources, but I have found two th
 * [http://www.3dgep.com/gpu-skinning-of-md5-models-in-opengl-and-cg/](http://www.3dgep.com/gpu-skinning-of-md5-models-in-opengl-and-cg/)
 * [http://ogldev.atspace.co.uk/www/tutorial38/tutorial38.html](http://ogldev.atspace.co.uk/www/tutorial38/tutorial38.html)
 
-If you load a model which contains animations with current code, you will get what is called the binding pose. You can try that (with code from previous chapter) and you will be able to see the 3D model perfectly. The binding poise defines the positions normals, texture coordinates of the model without being affected by animation at all. An animated model defines in essence the following additional information:
+If you load a model which contains animations with current code, you will get what is called the binding pose. You can try that (with code from previous chapter) and you will be able to see the 3D model perfectly. The binding pose defines the positions, normals, and texture coordinates of the model without being affected by animation at all. An animated model defines in essence the following additional information:
 
 * A tree like structure, composed by bones, which define a hierarchy where we can compose transformations.
 * Each mesh, besides containing information about vertex position, normals, etc, will include information about which bones does this vertex relate to (by using a bone index) and how much they are affected (that is modulating the effect by using a weight factor).
@@ -81,13 +81,13 @@ Therefore, each vertex, besides containing position, normals and texture coordin
 
 ![Animation VAO](../.gitbook/assets/static_vao_animation_vao.png)
 
-Assimp scene object defines a Node’s hierarchy. Each Node is defined by a name a list of children node. Animations use these nodes to define the transformations that should be applied to. This hierarchy is defined indeed the bones’ hierarchy. Every bone is a node, and has a parent, except the root node, and possible a set of children. There are special nodes that are not bones, they are used to group transformations, and should be handled when calculating the transformations. Another issue is that this Nodes hierarchy is defined from the whole model, we do not have separate hierarchies for each mesh.
+Assimp scene object defines a Node's hierarchy. Each Node is defined by a name and a list of children nodes. Animations use these nodes to define the transformations that should be applied. This hierarchy defined is indeed the bones’ hierarchy. Every bone is a node, and has a parent, except the root node, and possible a set of children. There are special nodes that are not bones; they are used to group transformations, and should be handled when calculating the transformations. Another issue is that this Node's hierarchy is defined from the whole model: we do not have separate hierarchies for each mesh.
 
-A scene also defines a set of animations. A single model can have more than one animation to model how a character walks, runs, etc. Each of these animations define different transformations. An animation has the following attributes:
+A scene also defines a set of animations. A single model can have more than one animation to model how a character walks, runs, etc. Each of these animations defines different transformations. An animation has the following attributes:
 
 * A name.
 * A duration. That is, the duration in time of the animation. The name may seem confusing since an animation is the list of transformations that should be applied to each node for each different frame.
-* A list of animation channels. An animation channel contains, for a specific instant in time the translation, rotation and scaling information that should be applied to each node. The class that models the data contained in the animation channels is the `AINodeAnim`. Animation channels could be assimilated as the key frames.
+* A list of animation channels. An animation channel contains, for a specific instant in time, the translation, rotation and scaling information that should be applied to each node. The class that models the data contained in the animation channels is the `AINodeAnim`. Animation channels could be assimilated as the key frames.
 
 The following figure shows the relationships between all the elements described above.
 
@@ -97,9 +97,9 @@ For a specific instant of time, for a frame, the transformation to be applied to
 
 * Construct the node hierarchy.
 * For each animation, iterate over each animation channel (for each animation node) and construct the transformation matrices for each of the bones for all the potential animation frames. Those transformation matrices are a combination of the transformation matrix of the node associated to the bone and the bone transformation matrices.
-* We start at the root node, and for each frame, build transformation matrix for that node, which is the the transformation matrix of the node multiplied by the composition of the translation, rotation and scale matrix of that specific frame for that node.
-* We then get the bones associated to that node and complement that transformation by multiplying the offset matrices of the bones. The result will be a transformation matrix associated to the related bones for that specific frame, which will be used in the shaders.
-* After that, we iterate over the children nodes, passing the transformation matrix of the parent node to be used also in combination with the children node transformations.
+* We start at the root node, and for each frame, build the transformation matrix for that node, which is the transformation matrix of the node multiplied by the composition of the translation, rotation and scale matrix of that specific frame for that node.
+* We then get the bones associated to that node and complement that transformation by multiplying the offset matrices of the bones. The result will be a transformation matrix associated with the related bones for that specific frame, which will be used in the shaders.
+* After that, we iterate over the children nodes, passing the transformation matrix of the parent node to also be used in combination with the children node transformations.
 
 ## Implementation
 
@@ -121,9 +121,9 @@ public class ModelLoader {
 }
 ```
 
-We need an extra argument (named `animation`) in the `loadModel` method to indicate if we are loading a model with animations or not. If so, we cannot use the `aiProcess_PreTransformVertices` flag. This flag performs some transformation over the data loaded so the model is placed in the origin and the coordinates are corrected to math OpenGL coordinate System. We cannot use this flag for animated models because it removes animation data information.
+We need an extra argument (named `animation`) in the `loadModel` method to indicate whether we are loading a model with animations or not. If so, we cannot use the `aiProcess_PreTransformVertices` flag. This flag performs some transformation over the data loaded so the model is placed in the origin and the coordinates are corrected to math OpenGL coordinate System. We cannot use this flag for animated models because it removes animation data information.
 
-While processing the meshes we will also process the associated bones and weights for each vertex when we are processing the meshes. While we are processing them, we will store the list of bones so we can later on build the required transformations:
+While processing the meshes, we will also process the associated bones and weights for each vertex, storing the list of bones so we can later on build the required transformations:
 
 ```java
 public class ModelLoader {
@@ -203,9 +203,9 @@ public class ModelLoader {
 }
 ```
 
-This method traverses the bone definition for a specific mesh, getting their weights and generating filling up three lists:
+This method traverses the bone definition for a specific mesh, getting their weights and filling up three lists:
 
-* `boneList`: It contains a list of bones, with their offset matrices. It will uses later on to calculate final bones transformations. A new class named `Bone` has been created to hold that information. This list will contain the bones for all the meshes.
+* `boneList`: It contains a list of bones, with their offset matrices. It will be used later on to calculate the final bones transformations. A new class named `Bone` has been created to hold that information. This list will contain the bones for all the meshes.
 * `boneIds`: It contains just the identifiers of the bones for each vertex of the `Mesh`. Bones are identified by its position when rendering. This list only contains the bones for a specific Mesh.
 * `weights`: It contains the weights for each vertex of the `Mesh` to be applied for the associated bones.
 
@@ -269,7 +269,7 @@ public class ModelLoader {
 }
 ```
 
-The `buildNodesTree` method is quite simple, It just traverses the nodes hierarchy starting from the root node constructing a tree of nodes:
+The `buildNodesTree` method is quite simple, It just traverses the node's hierarchy starting from the root node, constructing a tree of nodes:
 
 ```java
 public class ModelLoader {
@@ -356,7 +356,7 @@ public class ModelLoader {
 }
 ```
 
-This method returns a `List` of `Model.Animation` instances. Remember that a model can have more than one animation, so they are stored by their index. For each of these animations we construct a list of animation frames (`Model.AnimatedFrame` instances), which are essentially a list of the transformation matrices to be applied to each of the bones that compose the model. For each of the animations, we calculate the maximum number of frames by calling the method `calcAnimationMaxFrames`, which is defined like this:
+This method returns a `List` of `Model.Animation` instances. Remember that a model can have more than one animation, so they are stored by their index. For each of these animations, we construct a list of animation frames (`Model.AnimatedFrame` instances), which are essentially a list of the transformation matrices to be applied to each of the bones that compose the model. For each animation, we calculate the maximum number of frames by calling the method `calcAnimationMaxFrames`, which is defined like this:
 
 ```java
 public class ModelLoader {
@@ -378,7 +378,7 @@ public class ModelLoader {
 }
 ```
 
-Before continuing to review the changes in the `ModelLoader` class, let's review the change sin the `Model` class to hold animation information:
+Before continuing to review the changes in the `ModelLoader` class, let's review the changes in the `Model` class to hold animation information:
 
 ```java
 public class Model {
@@ -404,11 +404,11 @@ public class Model {
 }
 ```
 
-As you can see we store the list of animations associated to the model, each of them defined by a name a duration and a list of animation frames, which in essence just store the bone transformation matrices to be applied for each bone.
+As you can see, we store the list of animations associated to the model, each animation defined by a name, a duration and a list of animation frames, which in essence just stores the bone transformation matrices to be applied for each bone.
 
-Back to the `ModelLoader` class, each `AINodeAnim` instance defines some transformations to be applied to a node in the model for a specific frame. These transformations, for a specific node, are defined in the `AINodeAnim` instance. These transformations are defined in the form of position translations, rotations and scaling values. The trick here is that, for example, for a specific node, translation values can stop at a specific frae, but rotations and scaling values can continue for the next frames. In this case, we will have less translation values than rotation or scaling ones. Therefore, a good approximation, to calculate the maximum number of frames is to use the maximum value. The problem gest more complex, because this is defines per node. A node can define just some transformations for the first frames and do not apply more modifications for the rest. In this case, we should use always the last defined values. Therefore, we get the maximum number for all the animations associated to the nodes.
+Back to the `ModelLoader` class, each `AINodeAnim` instance defines some transformations to be applied to a node in the model for a specific frame. These transformations, for a specific node, are defined in the `AINodeAnim` instance. These transformations are defined in the form of position translations, rotations and scaling values. The trick here is that, for example, for a specific node, translation values can stop at a specific frame, but rotations and scaling values can continue for the next frames. In this case, we will have less translation values than rotation or scaling ones. Therefore, a good approximation to calculate the maximum number of frames is to use the maximum value. The problem gets more complex, because this is defined per node. A node can just define some transformations for the first frames and not apply more modifications for the rest. In this case, we should always use the last defined values. Therefore, we get the maximum number for all the animations associated to the nodes.
 
-Going back to the `processAnimations` method, with that information, we are ready to iterate over the different frames and build the transformation matrices for the bones by calling the `buildFrameMatrices` method. For each frame we start with the root node, and will apply the transformations recursively from top to down of the nodes hierarchy. The `buildFrameMatrices` is defined like this:
+Going back to the `processAnimations` method, with that information, we are ready to iterate over the different frames and build the transformation matrices for the bones by calling the `buildFrameMatrices` method. For each frame, we start with the root node, and will apply the transformations recursively from top to bottom of the nodes hierarchy. The `buildFrameMatrices` is defined like this:
 
 ```java
 public class ModelLoader {
@@ -439,7 +439,7 @@ public class ModelLoader {
 }
 ```
 
-We get the transformation associated to the node. Then we check if this node has an animation node associated to it. If so, we need to get the proper translation, rotation and scaling transformations that apply to the frame that we are handling. With that information, we get the bones associated to that node and update the transformation matrix for each of those bones, for that specific frame by multiplying:
+We get the transformation associated to the node. Then we check if this node has an animation node associated to it. If so, we need to get the proper translation, rotation and scaling transformations that apply to the frame we are handling. With that information, we get the bones associated to that node and update the transformation matrix for each of those bones for that specific frame by multiplying:
 
 * The model inverse global transformation matrix (the inverse of the root node transformation matrix).
 * The transformation matrix for the node.
@@ -485,7 +485,7 @@ public class ModelLoader {
 }
 ```
 
-The `AINodeAnim` instance defines a set of keys that contain translation, rotation and scaling information. These keys are referred to specific instant of times. We assume that information is ordered in time, and construct a list of matrices that contain the transformation to be applied for each frame. As it has been said before, some of those transformations may "stop" at a specific frame, we should use the last values for the last of the frames.
+The `AINodeAnim` instance defines a set of keys that contain translation, rotation and scaling information. These keys are referred to specific instants of time. We assume that information is ordered by time, and construct a list of matrices that contain the transformation to be applied for each frame. As said before, some of those transformations may "stop" at a specific frame, so we should use the last values for the last of the frames.
 
 The `findAIAnimNode` method is defined like this:
 
@@ -552,7 +552,7 @@ public class Mesh {
 }
 ```
 
-The `Node` class just stores the data associated to an `AINode` an has specific methods to manage its children:
+The `Node` class just stores the data associated to an `AINode` and has specific methods to manage its children:
 
 ```java
 package org.lwjglb.engine.scene;
@@ -599,7 +599,7 @@ public class Node {
 }
 ```
 
-Now we can view how we render animated models and how they can coexist with static ones. Let's start with the `SceneRender` class. In this class we just need to setup a new uniform to pass the bones matrices (assigned to current animation frame) so they can be used in the shader. Besides that, render of static and animated entities do not have any additional impact over this class.
+Now we can view how we render animated models and how they can coexist with static ones. Let's start with the `SceneRender` class. In this class we just need to set up a new uniform to pass the bones matrices (assigned to current animation frame) so they can be used in the shader. Besides that, the render of static and animated entities do not have any additional impact over this class.
 
 ```java
 public class SceneRender {
@@ -637,7 +637,7 @@ public class SceneRender {
 }
 ```
 
-For static models, we will pass an array of matrices set to null. We need to modify also the `UniformsMap` to add a new method to setup the values for an array of matrices:
+For static models, we will pass an array of matrices set to null. We also need to modify the `UniformsMap` to add a new method to set up the values for an array of matrices:
 
 ```java
 public class UniformsMap {
@@ -655,7 +655,7 @@ public class UniformsMap {
 }
 ```
 
-We have also created a new class named `AnimationData`to control the current animation set to an `Entity`:
+We also have created a new class named `AnimationData` to control the current animation set to an `Entity`:
 
 ```java
 package org.lwjglb.engine.scene;
@@ -726,7 +726,7 @@ public class Entity {
 }
 ```
 
-We need to modify the scene vertex shader (`scene.vert`) to put into play animation data. We start by defining some constants and the new input attributes for bone weights and indices (we are using four elements per vertex so we use `vec4` and `ivec4`). We pass also the bone matrices associated to current animation as a uniform.
+We need to modify the scene vertex shader (`scene.vert`) to put into play animation data. We start by defining some constants and the new input attributes for bone weights and indices (we are using four elements per vertex so we use `vec4` and `ivec4`). We also pass the bone matrices associated to current animation as a uniform.
 
 ```glsl
 #version 330
@@ -746,7 +746,7 @@ uniform mat4 bonesMatrices[MAX_BONES];
 ...
 ```
 
-In the `main` function we will iterate over the bone weights and modify the position and normals using the matrices, designated by the associated bone indices, and modulated by the associated weights. You can think about it like if each bone would contribute to position (and normals) modification but modulated by using the weights. If we are using static models, the weights will be zero so we will stick to original position and normals values.
+In the `main` function we will iterate over the bone weights and modify the position and normals using the matrices designated by the associated bone indices and modulated by the associated weights. You can think about it as if each bone would contribute to position (and normals) modification but modulated by using the weights. If we are using static models, the weights would be zero so we will stick to original position and normals values.
 
 ```glsl
 ...
@@ -866,7 +866,7 @@ public class Main implements IAppLogic {
 }
 ```
 
-Finally, we need to modify also the `SkyBox` class since the `loadModel` method from the `ModelLoader` class has changes:
+Finally, we also need to modify the `SkyBox` class since the `loadModel` method from the `ModelLoader` class has changes:
 
 ```java
 public class SkyBox {
