@@ -1,24 +1,24 @@
 # Chapter 14 - Normal Mapping
 
-In this chapter, we will explain a technique that will dramatically improve how our 3D models look like. By now we are able to apply textures to complex 3D models, but we are still far away from what real objects look like. Surfaces in the real world are not perfectly plain, they have imperfections that our 3D models currently do not have.
+In this chapter, we will explain a technique that will dramatically improve the appearance of our 3D models. By now, we are able to apply textures to complex 3D models, but our models are still far from what real objects look like. Surfaces in the real world are not perfectly plain, they have imperfections which our 3D models currently lack.
 
-In order to render more realistic scenes, we are going to use normal maps. If you look at a flat surface in the real world you will see that those imperfections can be seen even at distance by the way that the light reflects on it. In a 3D scene, a flat surface will have no imperfections, we can apply a texture to it but we won’t change the way that light reflects on it. That’s the thing that makes the difference.
+In order to render more realistic scenes, we will use normal maps. If you look at a flat surface in the real world, you will notice that those imperfections are visible even at a distance due to the way light reflects off of it. In a 3D scene, a flat surface has no imperfections so even if we apply a texture to it, the way that light reflects off of the surface won't change, causing it to appear flat and unrealistic. 
 
-We may think of increasing the detail of our models by increasing the number of triangles and reflect those imperfections, but performance will degrade. What we need is a way to change the way light reflects on surfaces to increase the realism. This is achieved with the normal mapping technique.
+We could think of increasing the detail of our models by increasing the number of triangles and reflect those imperfections, but performance would degrade. To increase the realism, we must apply a system that changes the way light reflects on surfaces. This is achieved with the normal mapping technique.
 
 You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-14).
 
 ## Concepts
 
-Let’s go back to the plain surface example, a plane can be defined by two triangles which form a quad. If you remember from the lighting chapters, the element that models how light reflects are surface normals. In this case, we have a single normal for the whole surface, each fragment of the surface uses the same normal when calculating how light affects them. This is shown in the next figure.
+Let’s go back to the plain surface example. A plane can be defined by two triangles which form a quad. If you remember from the lighting chapters, the element that models how light reflects are surface normals. In this case, we have a single normal for the whole surface, each fragment of the surface uses the same normal when calculating how light affects them. This is shown in the next figure.
 
 ![Surface Normals](<../.gitbook/assets/surface_normals (1).png>)
 
-If we could change the normals for each fragment of the surface we could model surface imperfections to render them in a more realistic way. This is shown in the next figure.
+If we could change the normals for each fragment of the surface, we could model surface imperfections to render them in a more realistic way. This is shown in the next figure.
 
 ![Fragment Normals](<../.gitbook/assets/fragment_normals (1).png>)
 
-The way we are going to achieve this is by loading another texture that stores the normals for the surface. Each pixel of the normal texture will contain the values of the $$x$$, y and $$z$$ coordinates of the normal stored as an RGB value.
+The way we are going to achieve this is by loading another texture that stores the normals for the surface. Each pixel of the normal texture will contain the values of the $$x$$, $$y$$ and $$z$$ coordinates of the normal stored as an RGB value.
 
 Let’s use the following texture to draw a quad.
 
@@ -28,19 +28,19 @@ An example of a normal map texture for the image above may be the following.
 
 ![Normal map texture](<../.gitbook/assets/rock_normals (1).png>)
 
-As you can see, it's as if we had applied a color transformation to the original texture. Each pixel stores normal information using color components. One thing that you will usually see when viewing normal maps is that the dominant colors tend to blue. This is due to the fact that normals point to the positive $$z$$ axis. The $$z$$ component will usually have a much higher value than the $$x$$ and $$y$$ ones for plain surfaces as the normal points out of the surface. Since $$x$$, $$y$$, $$z$$ coordinates are mapped to RGB, the blue component will have also a higher value.
+As you can see, it's as if we had applied a color transformation to the original texture. Each pixel stores normal information using color components. One thing that you will usually see when viewing normal maps is that the dominant colors tend to skew blue. This is due to the fact that normals point to the positive $$z$$ axis. The $$z$$ component will usually have a much higher value than the $$x$$ and $$y$$ ones for plain surfaces as the normal points out of the surface. Since $$x$$, $$y$$, $$z$$ coordinates are mapped to RGB, the blue component will have also a higher value.
 
 So, to render an object using normal maps we just need an extra texture and use it while rendering fragments to get the appropriate normal value.
 
 ## Implementation
 
-Usually, normal maps are not defined in that way, they usually are defined in the so called tangent space. The tangent space is a coordinate system that is local to each triangle of the model. In that coordinate space the $$z$$ axis always points out of the surface. This is the reason why a normal map is usually bluish, even for complex models with opposing faces. In order to handle tangent space, we need norm,als, tangent and bi-tangent vectors. We already have normal vector, the tangent and bitangent vectors are perpendicular vectors to the normal one. We need these vectors to calculate the `TBN` matrix which will allow us to use data that is in tangent space to the coordinate system we are using in our shaders.
+Usually, normal maps are not defined in that way; they are usually defined in the so called tangent space. The tangent space is a coordinate system that is local to each triangle of the model. In that coordinate space the $$z$$ axis always points out of the surface. This is the reason why a normal map is usually bluish, even for complex models with opposing faces. In order to handle tangent space, we need norm,als, tangent and bi-tangent vectors. We already have the normal vector, the tangent and bitangent vectors are perpendicular vectors to the normal one. We need these vectors to calculate the `TBN` matrix which will allow us to use data that is in tangent space to the coordinate system we are using in our shaders.
 
 You can check a great tutorial on this aspect [here](https://learnopengl.com/Advanced-Lighting/Normal-Mapping)
 
-Therefore, the first step is to add support for normal mapping loading the `ModelLoader` class, including tangent and bitangent information. If you recall, when setting the model loading flags for assimp, we included this one: `aiProcess_CalcTangentSpace`. This flag allows to automatically calculate tangent and bitangent data.
+Therefore, the first step is to add support for normal mapping loading the `ModelLoader` class, including tangent and bitangent information. If you recall, when setting the model loading flags for assimp, we included this one: `aiProcess_CalcTangentSpace`. This flag allows for automatic calculations of the tangent and bitangent data.
 
-In the `processMaterial` method we will first query for the presence of a normal map texture. If so, we load that texture and associate that texture path to the material:
+In the `processMaterial` method we will first query for the presence of a normal map texture. If present, we load that texture and associate that texture path with the material:
 
 ```java
 public class ModelLoader {
@@ -64,7 +64,7 @@ public class ModelLoader {
 }
 ```
 
-In the `processMesh` method we need to load also data for tangents and bitangents:
+In the `processMesh` method we also need to load data for tangents and bitangents:
 
 ```java
 public class ModelLoader {
@@ -126,7 +126,7 @@ public class ModelLoader {
 }
 ```
 
-As you can see, we need to modify also `Mesh` and `Material` classes to hold the new data. Let's start by the `Mesh` class:
+As you can see, we also need to modify the `Mesh` and `Material` classes to hold the new data. Let's start with the `Mesh` class:
 
 ```java
 public class Mesh {
@@ -186,7 +186,7 @@ public class Material {
 }
 ```
 
-Now we need to modify the shaders, starting by the scene vertex shader (`scene.vert`):
+Now we need to modify the shaders, starting with the scene vertex shader (`scene.vert`):
 
 ```glsl
 #version 330
@@ -219,8 +219,7 @@ void main()
     outTextCoord  = texCoord;
 }
 ```
-
-As you can see we need to define the new input data associated to bitangent and tangent. We transform those elements in the same way that we handled the normal and pass that data as an input to the fragment shader (`scene.frag`):
+As you can see, we need to define the new input data associated to bitangent and tangent. We transform those elements in the same way that we handled the normal: by passing that data as an input to the fragment shader (`scene.frag`):
 
 ```glsl
 #version 330
@@ -241,7 +240,7 @@ uniform sampler2D normalSampler;
 ...
 ```
 
-We start by defining the new inputs from the vertex shader, including and additional element for the `Material` struct which signals if there is a normal map available or not (`hasNormalMap`). We also add a new uniform for the normal map texture (`normalSampler`)). The next step is to define a function hat updates the normal based on normal map texture:
+We start by defining the new inputs from the vertex shader, including an additional element for the `Material` struct which signals if there is a normal map available or not (`hasNormalMap`). We also add a new uniform for the normal map texture (`normalSampler`)). The next step is to define a function that updates the normal based on normal map texture:
 
 ```glsl
 ...
@@ -293,11 +292,11 @@ The `calcNormal` function takes the following parameters:
 * The vertex bitangent.
 * The texture coordinates.
 
-The first thing we do in that function is to calculate the TBN matrix. After that, we get the normal value form the normal map texture and use the TBN Matrix to pass from tangent space to view space. Remember that the colour we get are the normal coordinates, but since they are stored as RGB values they are contained in the range \[0, 1]. We need to transform them to be in the range \[-1, 1], so we just multiply by two and subtract 1.
+The first thing we do in that function is calculate the TBN matrix. After that, we get the normal value from the normal map texture and use the TBN Matrix to pass from tangent space to view space. Remember that the colour we get are the normal coordinates, but since they are stored as RGB values they are contained in the range \[0, 1]. We need to transform them to be in the range \[-1, 1], so we just multiply by two and subtract 1.
 
 Finally, we use that function only if the material defines a normal map texture.
 
-We need to modify also the `SceneRender` class to create and use the new normals that we use in the shaders:
+We also need to modify the `SceneRender` class to create and use the new normals that we use in the shaders:
 
 ```java
 public class SceneRender {
@@ -346,7 +345,7 @@ layout (location=4) in vec2 texCoord;
 ...
 ```
 
-The last step is to update the `Main` class to show this effect. We will load two quads with and without normal maps associated to them. Also we will use left and right arrows to control light angle to show the effect.
+The last step is to update the `Main` class to show this effect. We will load two quads with and without normal maps associated to them. Also, we will use left and right arrows to control light angle to show the effect.
 
 ```java
 public class Main implements IAppLogic {
@@ -442,6 +441,6 @@ The result is shown in the next figure.
 
 ![Normal mapping result](<../.gitbook/assets/normal_mapping_result (1).png>)
 
-As you can see the quad that has a normal texture applied gives the impression of having more volume. Although it is, in essence, a plain surface like the other quad, you can see how the light reflects.
+As you can see, the quad that has a normal texture applied gives the impression of having more volume. Although it is, in essence, a plain surface like the other quad, you can see the difference in how the light reflects.
 
 [Next chapter](../chapter-15/chapter-15.md)
