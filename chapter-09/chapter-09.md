@@ -108,7 +108,7 @@ public class ModelLoader {
 }
 ```
 
-The rest of the code for the constructor is a as follows:
+The rest of the code for the constructor is as follows:
 
 ```java
 public class ModelLoader {

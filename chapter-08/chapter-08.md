@@ -1,14 +1,14 @@
 # Chapter 08 - Camera
 
-In this chapter we will learn how to move inside a rendered 3D scene. This capability is like having a camera that can travel inside the 3D world and in fact that's the term used to refer to it.
+In this chapter, we will learn how to move inside a rendered 3D scene. This capability is like having a camera that can travel inside the 3D world and in fact, that's the term used to refer to it.
 
 You can find the complete source code for this chapter [here](https://github.com/lwjglgamedev/lwjglbook/tree/main/chapter-08).
 
 ## Camera introduction
 
-If you try to search for specific camera functions in OpenGL you will discover that there is no camera concept, or in other words the camera is always fixed, centered in the (0, 0, 0) position at the center of the screen. So what we will do is a simulation that gives us the impression that we have a camera capable of moving inside the 3D scene. How do we achieve this? Well, if we cannot move the camera then we must move all the objects contained in our 3D space at once. In other words, if we cannot move a camera we will move the whole world.
+If you try to search for specific camera functions in OpenGL, you will discover that there is no camera concept, or in other words, the camera is always fixed, centered at position (0, 0, 0)  in the center of the screen. So, what we will do is a simulation that gives us the impression that we have a camera capable of moving inside the 3D scene. How do we achieve this? Well, if we cannot move the camera, then we must move all the objects contained in our 3D space at once. In other words, if we cannot move a camera, we will move the whole world.
 
-Hence, suppose that we would like to move the camera position along the z axis from a starting position (Cx, Cy, Cz) to a position (Cx, Cy, Cz+dz) to get closer to the object which is placed at the coordinates (Ox, Oy, Oz).
+Hence, suppose that we would like to move the camera position along the z axis from a starting position (Cx, Cy, Cz) to a position (Cx, Cy, Cz+dz) to get closer to the object, which is placed at the coordinates (Ox, Oy, Oz).
 
 ![Camera movement](../.gitbook/assets/camera_movement.png)
 
@@ -20,15 +20,15 @@ A camera can be displaced along the three axis (x, y and z) and also can rotate 
 
 ![Roll pitch and yaw](../.gitbook/assets/roll_pitch_yaw.png)
 
-So basically what we must do is to be able to move and rotate all of the objects of our 3D world. How are we going to do this? The answer is to apply another transformation that will translate all of the vertices of all of the objects in the opposite direction of the movement of the camera and that will rotate them according to the camera rotation. This will be done of course with another matrix, the so called view matrix. This matrix will first perform the translation and then the rotation along the axis.
+So basically what we must do is to be able to move and rotate all of the objects of our 3D world. How are we going to do this? The answer is to apply another transformation that will translate all of the vertices of all of the objects in the opposite direction of the movement of the camera, and that will rotate them according to the camera rotation. This will be done, of course, with another matrix, the so called view matrix. This matrix will first perform the translation and then the rotation along the axis.
 
-Let's see how we can construct that matrix. If you remember from the transformations chapter our transformation equation was like this:
+Let's see how we can construct that matrix. If you remember from the transformations chapter, our transformation equation was like this:
 
 $$
 \begin{array}{lcl} Transf & = & \lbrack ProjMatrix \rbrack \cdot \lbrack TranslationMatrix \rbrack \cdot \lbrack RotationMatrix \rbrack \cdot \lbrack ScaleMatrix \rbrack \\ & = & \lbrack ProjMatrix \rbrack \cdot \lbrack WorldMatrix \rbrack \end{array}
 $$
 
-The view matrix should be applied before multiplying by the projection matrix, so our equation should be now like this:
+The view matrix should be applied before multiplying by the projection matrix, so our equation should now be like this:
 
 $$
 \begin{array}{lcl} Transf & = & \lbrack ProjMatrix \rbrack \cdot \lbrack ViewMatrix \rbrack \cdot \lbrack TranslationMatrix \rbrack \cdot \lbrack RotationMatrix \rbrack \cdot \lbrack ScaleMatrix \rbrack \\ & = & \lbrack ProjMatrix \rbrack \cdot \lbrack ViewMatrix \rbrack \cdot \lbrack WorldMatrix \rbrack \end{array}
@@ -36,7 +36,7 @@ $$
 
 ## Camera implementation
 
-So let’s start modifying our code to support a camera. First of all we will create a new class called `Camera` which will hold the position and rotation state of our camera as well as its view matrix. The class is defined like this:
+So let’s start modifying our code to support a camera. First of all, we will create a new class called `Camera` which will hold the position and rotation state of our camera as well as its view matrix. The class is defined like this:
 
 ```java
 package org.lwjglb.engine.scene;
@@ -129,9 +129,9 @@ public class Camera {
 }
 ```
 
-As you can see, besides rotation and position we define some vectors to define forward up and right directions. This is because we are implementing a free space movement camera, and when we rotate it if we want to move forward we just want to move where the camera is pointing, not to predefined axis. We need to get those vectors to calculate where the next position will be placed. And finally, at the end the state of the camera is stored into a 4x4 matrix, the view matrix, so any time we change position or rotation we need to update it. As you can see, when updating thew view matrix, we first need to do the rotation and then the translation. If we did the opposite we would not be rotating along the camera position but along the coordinates origin.
+As you can see, besides rotation and position, we define some vectors to define forward, up and right directions. This is because we are implementing a free space movement camera. If we move after any rotation, we want to move in the direction the camera is pointing in, not along a predefined axis. We need to get those vectors to calculate where the next position will be placed. At the end, the state of the camera is stored into a 4x4 matrix, the view matrix. Any time we change position or rotation, we need to update it. As you can see, when updating the view matrix, we first need to do the rotation and then the translation. If we did the opposite, we would not be rotating along the camera position but along the coordinate origin.
 
-The `Camera` class also provides methods to update position when moving forward, up or to the right. In these methods, the view matrix is used to calculate where the forward, up or right methods should be according to current state, and increases the position accordingly. We use the fantastic JOML library to these calculations for us while maintaining the code quite simple.
+The `Camera` class also provides methods to update position when moving forward, up or to the right. In these methods, the view matrix is used to calculate where the forward, up or right methods should be according to the current state, and updates the position accordingly. We use the fantastic JOML library to perform these calculations for us while maintaining the code quite simple.
 
 ## Using the Camera
 
@@ -234,7 +234,7 @@ The `MouseInput` class, in its constructor, registers a set of callbacks to proc
 * `glfwSetCursorEnterCallback`: Registers a callback that will be invoked when the mouse enters our window. We will be receiving mouse events even if the mouse is not in our window. We use this callback to track when the mouse is in our window.
 * `glfwSetMouseButtonCallback`: Registers a callback that will be invoked when a mouse button is pressed.
 
-The `MouseInput` class provides an input method which should be called when game input is processed. This method calculates the mouse displacement from the previous position and stores it into the `displVec` variable so it can be used by our game.
+The `MouseInput` class provides an input method that should be called when game input is processed. This method calculates the mouse displacement from the previous position and stores it in the `displVec` variable so it can be used by our game.
 
 The `MouseInput` class will be instantiated in our `Window` class, which will also provide a getter to return its instance.
 
@@ -255,7 +255,7 @@ public class Window {
 }
 ```
 
-In the `Engine` class we will consume mouse input when handling regular input:
+In the `Engine` class, we will consume mouse input when handling regular input:
 
 ```java
 public class Engine {
@@ -272,7 +272,7 @@ public class Engine {
 }
 ```
 
-Now we can modify the vertex shader to use the `Camera`'s view matrix, which as you may guess will be passed as an uniform.
+Now we can modify the vertex shader to use the `Camera`'s view matrix, which, as you may guess, will be passed as a uniform.
 
 ```glsl
 #version 330
@@ -315,9 +315,9 @@ public class SceneRender {
 
 And that’s all, our base code supports the concept of a camera. Now we need to use it. We can change the way we handle the input and update the camera. We will set the following controls:
 
-* Keys “A” and “D” to move the camera to the left and right (x axis) respectively.
-* Keys “W” and “S” to move the camera forward and backwards (z axis) respectively.
-* Keys “Z” and “X” to move the camera up and down (y axis) respectively.
+* Keys “A” and “D” to move the camera to the left and right (x axis), respectively.
+* Keys “W” and “S” to move the camera forward and backwards (z axis), respectively.
+* Keys “Z” and “X” to move the camera up and down (y-axis), respectively.
 
 We will use the mouse position to rotate the camera along the x and y axis when the right button of the mouse is pressed.
 

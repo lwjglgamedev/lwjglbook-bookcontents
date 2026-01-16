@@ -10,15 +10,15 @@ You can find the complete source code for this chapter [here](https://github.com
 
 ## Concepts
 
-Let’s go back to the plain surface example, a plane can be defined by two triangles which form a quad. If you remember from the lighting chapters, the element that models how light reflects are surface normals. In this case, we have a single normal for the whole surface, each fragment of the surface uses the same normal when calculating how light affects them. This is shown in the next figure.
+Let’s go back to the plain surface example. A plane can be defined by two triangles which form a quad. If you remember from the lighting chapters, the element that models how light reflects are surface normals. In this case, we have a single normal for the whole surface, each fragment of the surface uses the same normal when calculating how light affects them. This is shown in the next figure.
 
 ![Surface Normals](<../.gitbook/assets/surface_normals (1).png>)
 
-If we could change the normals for each fragment of the surface we could model surface imperfections to render them in a more realistic way. This is shown in the next figure.
+If we could change the normals for each fragment of the surface, we could model surface imperfections to render them in a more realistic way. This is shown in the next figure.
 
 ![Fragment Normals](<../.gitbook/assets/fragment_normals (1).png>)
 
-The way we will achieve this is by loading another texture that stores the normals for the surface. Each pixel of the normal texture will contain the values of the $$x$$, y and $$z$$ coordinates of the normal stored as an RGB value.
+The way we are going to achieve this is by loading another texture that stores the normals for the surface. Each pixel of the normal texture will contain the values of the $$x$$, $$y$$ and $$z$$ coordinates of the normal stored as an RGB value.
 
 Let’s use the following texture to draw a quad.
 
