@@ -218,7 +218,7 @@ public class SceneRender {
 }
 ```
 
-Finally, wew will modify the `Main` class to set up fog and just use a single quad as a terrain scaled to show the effect of fog.
+Finally, we will modify the `Main` class to set up fog and just use a single quad as a terrain scaled to show the effect of fog.
 
 ```java
 public class Main implements IAppLogic {
@@ -264,7 +264,7 @@ public class Main implements IAppLogic {
 }
 ```
 
-One important thing to highlight is that we must choose wisely the fog color. This is even more important when we have no skybox but a fixed color background. We should set up the fog color to be equal to the clear color. If you uncomment the code that render the skybox and rerun the example you will get something like this.
+One important thing to highlight is that we must choose the fog color wisely. This is even more important when we have no skybox but a fixed color background. We should set up the fog color to be equal to the clear color. If you uncomment the code that render the skybox and rerun the example you will get something like this.
 
 You should be able to see something like this:
 
