@@ -48,25 +48,29 @@ public class Model {
 }
 ```
 
-As you can see, a model, by now, stores a list of `Mesh` instances and has a unique identifier. In addition to that, we store the list of game entities (modelled by the `Entity` class) that are associated to that model. If you are going to create a full engine, you may want to store those relationships in somewhere else (not in the model), however, for simplicity we will store those links in the `Model` class. This way, render process will be simpler.
+As you can see, a model, by now, stores a list of `Mesh` instances and has a unique identifier. In addition to that, we store the list of game entities (modelled by the `Entity` class) that are associated to that model. If you are going to create a full engine, you may want to store those relationships in somewhere else (not in the model), but, for simplicity, we will store those links in the `Model` class. This way, render process will be simpler.
 
-Prior to see what an `Entity` looks like, let us discuss a little bit about model transformations. In order to represent any model in a 3D scene we need to provide support for some basic operations to act upon any model:
+In order to represent models in a 3D scene, we'd like to provide support for some basic operations:
 
-* Translation: Move an object by some amount on any of the three axes.
-* Rotation: Rotate an object by some amount of degrees around any of the three axes.
+* Translation: Move an object in some direction by some amount.
+* Rotation: Rotate an object by some angle around any of the three axes.
 * Scale: Adjust the size of an object.
 
 ![Transformations](<../.gitbook/assets/transformations (1).png>)
 
-The operations described above are known as transformations. And you are probably guessing, correctly, that the way we are going to achieve that is by multiplying our coordinates by a set of matrices (one for translation, one for rotation and one for scaling). Those three matrices will be combined into a single matrix called world matrix and passed as a uniform to our vertex shader.
+The operations described above are known as transformations. You probably guessed--correctly--that the way we'll achieve that is by multiplying our coordinates by a sequence of matrices: one for performing a translation, one for rotation and one for scaling. Those three matrices will be combined into a single matrix called a transformation matrix and passed as a uniform to our vertex shader.
 
-The reason why it is called world matrix is because we are transforming from model coordinates to world coordinates. When you learn about loading 3D models you will see that those models are defined in their own coordinate systems. They don’t know the size of your 3D space and they need to be placed in it. So when we multiply our coordinates by our matrix what we are doing is transforming from one coordinate system (the model one) to another (the one for our 3D world).
+Generally, 3D models exist in their own space. A 3D artist would probably choose to model a pancake with the center of the pancake at the origin and the flat sides pointing straight up and down. When you place the model in your scene, though, you might want it to be somewhere else, like on a griddle, or in the air, being flipped. You might even want more than one! In that case, it would be useful to, instead of having a different 3D file for each different pancake, just have one pancake file that we render in different positions for each different pancake we want to render. This is why model matrices are so standard: easier model creation, easier placing of the model in space, and the ability to have more than one stagnant model.
 
-That world matrix will be calculated like this (the order is important since multiplication using matrices is not commutative):
+Such a matrix, comprised of three transformations, will appear twice: once for the world matrix, used for converting the coordinates of the vertices of your model (your centered, straight-up-and-down pancake) to where you want them to be in your 3D space (a pancake flying through the air); and once for the projection matrix, or view matrix, for rendering the shapes in 3D. This second use will be discussed later, in chapter 8. For now, let's jsut worry about the world matrix.
+
+That world matrix will be calculated like this:
 
 $$
 World Matrix=\left[Translation Matrix\right]\left[Rotation Matrix\right]\left[Scale Matrix\right]
 $$
+
+Transformation matrices are applied right to left. So here, first the coordinates are scaled, then rotated, then transformed. While the order of the rotation and scale matrices don't matter, we want the Translation Matrix to be last: since we're rotating about the origin, the position of the object would be rotated, too!
 
 If we include our projection matrix in the transformation matrix it would be like this:
 
@@ -98,9 +102,9 @@ Scale Matrix Parameters:
 * sy: Scaling along the y axis.
 * sz: Scaling along the z axis.
 
-The rotation matrix is much more complex. But keep in mind that it can be constructed by the multiplication of 3 rotation matrices for a single axis, each or by applying a quaternion (more on this later).
+The rotation matrix is much more complex. But keep in mind that it can be constructed by multiplying 3 rotation matrices, one for each axis, or by applying a quaternion (more on this later).
 
-So let us define the `Entity` class:
+Now, let's define the `Entity` class:
 
 ```java
 package org.lwjglb.engine.scene;
@@ -169,13 +173,13 @@ public class Entity {
 }
 ```
 
-As you can see a `Model` instance also has a unique identifier and defines attributes for its position (as a 3 components vector), its scale (just a float, we will be assuming that we scale evenly across all three axis) and rotation (as a quaternion). We could have store rotation information storing rotation angles for pitch, yaw and roll, but instead we are using a strange mathematical artifact, named quaternion, that you may not have heard of. The problem with using rotation angles is the so called gimbal lock. When applying rotation using these angles (called Euler angles) we may end up aligning two rotating axis and losing degrees of freedom, resulting in the inability to properly rotate an object. Quaternions do not have these problem. Instead of me trying to poorly explain what quaternions are, let me just link to an excellent [blog entry](https://www.3dgep.com/understanding-quaternions/) which explain all the concepts behind them. If you do not want to deep dive into them, just keep in mind that they will allow to express rotations without the problems of Euler angles.
+As you can see, an `Entity` instance has a unique ID and defines attributes for its position (as a 3 components vector), its scale (just a float, we will be assuming that we scale evenly across all three axis) and rotation (as a quaternion). We could have store rotation information storing rotation angles for pitch, yaw and roll, but instead we are using a strange mathematical object, called a quaternion, that you may not have heard of. The problem with using rotation angles is the so called gimbal lock. When applying rotation using these angles (called Euler angles) we may end up aligning two rotating axis and losing degrees of freedom, resulting in the inability to properly rotate an object. Quaternions do not have these problem. Instead of me trying to poorly explain what quaternions are, let me just link to an excellent [blog entry](https://www.3dgep.com/understanding-quaternions/) which explain all the concepts behind them. All you need to know about quaternions, though, is that they represent a rotation without having the same pitfalls Euler angles do.
 
-All the transformations applied to a model are defined by a 4x4 matrix, therefore a `Model` instance stores a `Matrix4f` instance which is automatically constructed by JOML method `translationRotateScale` using position, scale and rotation. We will need to call the `updateModelMatrix` method each time we modify the attributes of a `Model` instance to update that matrix.
+All the transformations applied to a model are defined by a 4x4 matrix, therefore a `Model` instance stores a `Matrix4f` instance for this transformation. It's automatically constructed using the JOML method `translationRotateScale` (taking position, scale and rotation). But we'll need to call the `updateModelMatrix` method each time we modify the attributes of a `Model` instance, to update that matrix.
 
 ## Other code changes
 
-We need to change the `Scene` class to store models instead of directly `Mesh` instances. In addition to that, we need to add support for linking `Entity` instances with models so we can later on render them.
+We need to change the `Scene` class to store models instead of `Mesh` instances. In addition to that, we need to add support for linking `Entity` instances with models so we can later on render them.
 
 ```java
 package org.lwjglb.engine.scene;
@@ -225,7 +229,7 @@ public class Scene {
 }
 ```
 
-Now we need to modify a little it the `SceneRender` class. Ths first thing that we need to do is to pass model matrix information to the shader through an uniform. Therefore, we will create a new uniform named `modelMatrix` in the vertex shader and, consequently, retrieve its location in the `createUniforms` method.
+Now we need to modify the `SceneRender` class a little. Ths first thing that we need to do is to pass model matrix information to the shader through an uniform. Therefore, we will create a new uniform named `modelMatrix` in the vertex shader and, consequently, retrieve its location in the `createUniforms` method.
 
 ```java
 public class SceneRender {
@@ -370,13 +374,13 @@ public class Main implements IAppLogic {
 }
 ```
 
-In order to draw a cube we just need to define eight vertices. Since we have 4 more vertices we need to update the array of colors
+In order to draw a cube we just need to define eight vertices. We'll define the new vertices in the `positions` array, making sure to keep the `colors` array length 8.
 
 ![Cube coords](<../.gitbook/assets/cube_coords (1).png>)
 
-Since a cube is made of six faces we need to draw twelve triangles (two per face), so we need to update the indices array. Remember that triangles must be defined in counter-clock wise order. If you do this by hand, is easy to make mistakes. Always put the face that you want to define indices for in front of you. Then, identify the vertices and draw the triangles in counter-clock wise order. Finally, we create a model with just one mesh and an entity associated to that model.
+Since a cube is made of six faces we need to draw twelve triangles (two per face), so we need to update the indices array. Remember that triangles must be defined in counter-clock wise order. Doing this by hard is tedious, and it's easy to mess up. Here's how to do it: Always put the face that you want to define indices for in front of you. Then, identify the vertices and draw the triangles in counter-clock wise order. Finally, we create a model with just one mesh and an entity associated to that model.
 
-We will first use the `input` method to modify the cube position by using cursor arrows and its scale by using `Z` and `X`key. We just need to detect the key that has been pressed, update the cube entity position and /or scale and finally update its model matrix.
+We will first use the `input` method to modify the cube position by using cursor arrows and its scale by using `Z` and `X`key. We just need to detect the key that has been pressed, update the cube entity position and /or scale, and, finally, update its model matrix.
 
 ```java
 public class Main implements IAppLogic {
@@ -415,7 +419,7 @@ public class Main implements IAppLogic {
 }
 ```
 
-In order to better view the cube we will change code that rotates the model in the `Main` class to rotate along the three axes. We will do this in the `update` method.
+In order to better view the cube, we'll have the model in the `Main` class  rotate along the three axes. We will do this in the `update` method.
 
 ```java
 public class Main implements IAppLogic {
@@ -432,7 +436,7 @@ public class Main implements IAppLogic {
 }
 ```
 
-And that’s all. We are now able to display a spinning 3D cube. You can now compile and run your example and you will obtain something like this.
+And that’s all. We are now able to display a spinning 3D cube! You can now compile and run your example and you will obtain something like this.
 
 ![Cube with no depth tests](<../.gitbook/assets/cube_no_depth_test (1).png>)
 
