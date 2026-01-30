@@ -129,6 +129,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.lwjgl.opengl.GL32.*;
+import static org.lwjgl.glfw.GLFW.*;
 
 public class GuiRender {
 
