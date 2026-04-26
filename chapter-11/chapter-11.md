@@ -1022,7 +1022,9 @@ public class SceneRender {
         Vector3f coneDirection = new Vector3f();
         float cutoff = 0.0f;
         if (spotLight != null) {
-            coneDirection = spotLight.getConeDirection();
+            Vector4f auxDir = new Vector4f(spotLight.getConeDirection(), 0.0f);
+            auxDir.mul(viewMatrix);
+            coneDirection.set(auxDir.x, auxDir.y, auxDir.z);
             cutoff = spotLight.getCutOff();
             pointLight = spotLight.getPointLight();
         }
@@ -1035,7 +1037,7 @@ public class SceneRender {
 }
 ```
 
-As we have said, these coordinates for lights must be in view space. Usually we will set up light coordinates in world space coordinates, so we need to multiply them by the view matrix in order to be able to use them in our shader. Finally, we need to update the `render` method to invoke the `updateLights` method and also set up properly the new elements of the model materials:
+As we have said, these coordinates for lights must be in view space. Usually we will set up light coordinates in world space coordinates, so we need to multiply them by the view matrix in order to be able to use them in our shader. This also applies to cone direction for spot light. Finally, we need to update the `render` method to invoke the `updateLights` method and also set up properly the new elements of the model materials:
 
 ```java
 public class SceneRender {
